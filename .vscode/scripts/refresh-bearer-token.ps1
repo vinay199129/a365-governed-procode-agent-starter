@@ -1,60 +1,154 @@
+# Refresh bearer token for MCP tool authentication (no WAM)
+# Run with: pwsh -NoProfile -File .vscode/scripts/refresh-bearer-token.ps1
+#
+# This script bypasses the unreliable Windows Account Manager (WAM) used by
+# the a365 CLI. It acquires a token using MSAL.NET device code flow, which
+# works reliably in VS Code terminals without hidden popup issues.
+#
+# Auth strategy (in order):
+#   1. MSAL.NET device code flow via Microsoft.Identity.Client (primary)
+#      - Uses the MSAL DLL bundled with Microsoft.Graph.Authentication module
+#      - Displays a code + URL in the terminal for browser sign-in
+#      - No hidden popups, no WAM dependency
+#
+# Requires: PowerShell 7+, Microsoft.Graph.Authentication module (for MSAL DLL)
+
 $ErrorActionPreference = 'Stop'
 
 $workspace = Get-Location
 $playgroundEnvPath = Join-Path $workspace 'env/.env.playground'
 $playgroundUserEnvPath = Join-Path $workspace 'env/.env.playground.user'
+$configPath = Join-Path $workspace 'a365.config.json'
+$manifestPath = Join-Path $workspace 'ToolingManifest.json'
 
+# --- Validate prerequisites ---
+if (-not (Test-Path $playgroundEnvPath)) { throw "Missing env file: $playgroundEnvPath" }
+if (-not (Test-Path $configPath)) { throw "Missing config: $configPath. Run a365 config init first." }
+if (-not (Test-Path $manifestPath)) { throw "Missing manifest: $manifestPath" }
+
+# --- Read configuration ---
+$config = Get-Content $configPath -Raw | ConvertFrom-Json
+$manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json
+$TenantId = $config.tenantId
+
+$appIdLine = Get-Content $playgroundEnvPath | Where-Object { $_ -match '^\s*CLIENT_APP_ID\s*=' } | Select-Object -First 1
+if (-not $appIdLine) { throw "CLIENT_APP_ID not found in $playgroundEnvPath" }
+$ClientAppId = ($appIdLine -split '=', 2)[1].Trim()
+if ([string]::IsNullOrWhiteSpace($ClientAppId)) { throw "CLIENT_APP_ID is empty in $playgroundEnvPath" }
+
+# --- Build scopes from ToolingManifest.json ---
+$resourceAppId = $manifest.mcpServers[0].audience
+$rawScopes = $manifest.mcpServers | ForEach-Object { $_.scope } | Select-Object -Unique
+$msalScopes = @($rawScopes | ForEach-Object { "$resourceAppId/$_" })
+
+Write-Host "============================================================" -ForegroundColor Cyan
+Write-Host " Bearer Token Refresh (device code flow, no WAM)" -ForegroundColor Cyan
+Write-Host "============================================================" -ForegroundColor Cyan
+Write-Host "  Tenant:     $TenantId"
+Write-Host "  Client App: $ClientAppId"
+Write-Host "  Resource:   $resourceAppId"
+Write-Host "  Scopes:     $($rawScopes -join ', ')"
+Write-Host ""
+
+# --- Ensure a365 CLI permissions are configured ---
 $a365Command = Get-Command a365 -ErrorAction SilentlyContinue
-if (-not $a365Command) {
-    throw "a365 CLI is not installed or not on PATH. Install with: dotnet tool install --global Microsoft.Agents.A365.DevTools.Cli"
+if ($a365Command) {
+    Write-Host "Ensuring MCP permissions on client app..." -ForegroundColor Yellow
+    & a365 develop add-permissions --app-id $ClientAppId 2>&1 | Out-Null
 }
 
-if (-not (Test-Path $playgroundEnvPath)) {
-    throw "Missing env file: $playgroundEnvPath"
+# --- Load MSAL.NET from Microsoft.Graph.Authentication module ---
+Write-Host ""
+Write-Host "Loading MSAL library..." -ForegroundColor Yellow
+
+$msalAssembly = [System.AppDomain]::CurrentDomain.GetAssemblies() |
+    Where-Object { $_.GetName().Name -eq 'Microsoft.Identity.Client' } |
+    Select-Object -First 1
+
+if (-not $msalAssembly) {
+    Import-Module Microsoft.Graph.Authentication -ErrorAction Stop
+    $graphModulePath = (Get-Module Microsoft.Graph.Authentication).ModuleBase
+    # MSAL DLL lives under Dependencies/Desktop (Windows) or Dependencies/Core
+    $msalPath = Join-Path $graphModulePath 'Dependencies' 'Desktop' 'Microsoft.Identity.Client.dll'
+    if (-not (Test-Path $msalPath)) {
+        $msalPath = Join-Path $graphModulePath 'Dependencies' 'Core' 'Microsoft.Identity.Client.dll'
+    }
+    if (-not (Test-Path $msalPath)) {
+        $msalPath = Join-Path $graphModulePath 'Dependencies' 'Microsoft.Identity.Client.dll'
+    }
+    if (-not (Test-Path $msalPath)) {
+        throw "Cannot find Microsoft.Identity.Client.dll. Ensure Microsoft.Graph.Authentication module is installed: Install-Module Microsoft.Graph.Authentication -Scope CurrentUser"
+    }
+    Add-Type -Path $msalPath
 }
 
-$appIdLine = Get-Content $playgroundEnvPath | Where-Object { $_ -match '^\s*CLIENT_APP_ID\s*=\s*.+$' } | Select-Object -First 1
-if (-not $appIdLine) {
-    throw "CLIENT_APP_ID is required in env/.env.playground"
-}
+# --- Build MSAL public client app ---
+$authority = "https://login.microsoftonline.com/$TenantId"
 
-$appId = ($appIdLine -split '=', 2)[1].Trim()
-if ([string]::IsNullOrWhiteSpace($appId)) {
-    throw "CLIENT_APP_ID in env/.env.playground is empty"
-}
+$publicApp = [Microsoft.Identity.Client.PublicClientApplicationBuilder]::Create($ClientAppId).
+    WithAuthority($authority).
+    WithRedirectUri("http://localhost").
+    Build()
 
-Write-Host "Running a365 develop add-permissions for app id $appId"
-& a365 develop add-permissions --app-id $appId
-if ($LASTEXITCODE -ne 0) {
-    throw "a365 develop add-permissions failed"
-}
+# Build .NET typed scope list
+$scopeList = [System.Collections.Generic.List[string]]::new()
+foreach ($s in $msalScopes) { $scopeList.Add($s) }
 
-Write-Host "Getting bearer token via a365..."
-Write-Host "This may complete silently using cached credentials, or it may require interactive Windows sign-in (WAM)."
-Write-Host "If interactive sign-in is required and no prompt appears, check the taskbar for a hidden sign-in window and bring it to front."
-Write-Host "Running a365 develop get-token for app id $appId"
-$tokenOutput = & a365 develop get-token --app-id $appId --output raw
-if ($LASTEXITCODE -ne 0) {
-    throw "a365 develop get-token failed"
-}
-
-$rawOutput = [string]::Join("`n", $tokenOutput)
-$rawOutput = $rawOutput -replace "`r", ''
-
+# --- Try silent auth first (cached token), then device code ---
 $bearerToken = $null
-$jwtRegex = '(?<token>[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)'
-$jwtMatches = [regex]::Matches($rawOutput, $jwtRegex)
-if ($jwtMatches.Count -gt 0) {
-    $bearerToken = ($jwtMatches | ForEach-Object { $_.Groups['token'].Value } | Sort-Object Length -Descending | Select-Object -First 1).Trim()
+
+try {
+    $accounts = $publicApp.GetAccountsAsync().GetAwaiter().GetResult()
+    $firstAccount = $accounts | Select-Object -First 1
+    if ($firstAccount) {
+        Write-Host "Attempting silent token acquisition (cached)..." -ForegroundColor Yellow
+        $result = $publicApp.AcquireTokenSilent($scopeList, $firstAccount).ExecuteAsync().GetAwaiter().GetResult()
+        $bearerToken = $result.AccessToken
+        Write-Host "Token acquired from cache." -ForegroundColor Green
+    } else {
+        throw "No cached account — need interactive auth"
+    }
+} catch {
+    # Silent failed — use device code flow
+    Write-Host "Using device code flow for authentication..." -ForegroundColor Yellow
+    Write-Host ""
+
+    # Callback must be pure .NET (no PowerShell runspace on MSAL's thread)
+    $csCode = @"
+using System;
+using System.Threading.Tasks;
+using Microsoft.Identity.Client;
+public static class DeviceCodeHelper {
+    public static Task Callback(DeviceCodeResult dcr) {
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine("------------------------------------------------------------");
+        Console.WriteLine(dcr.Message);
+        Console.WriteLine("------------------------------------------------------------");
+        Console.ResetColor();
+        Console.WriteLine();
+        return Task.CompletedTask;
+    }
+}
+"@
+    Add-Type -ReferencedAssemblies @($msalPath, 'System.Console', 'System.Runtime') -TypeDefinition $csCode
+
+    $callback = [Func[Microsoft.Identity.Client.DeviceCodeResult, System.Threading.Tasks.Task]]([DeviceCodeHelper]::Callback)
+    $result = $publicApp.AcquireTokenWithDeviceCode($scopeList, $callback).ExecuteAsync().GetAwaiter().GetResult()
+
+    $bearerToken = $result.AccessToken
 }
 
 if ([string]::IsNullOrWhiteSpace($bearerToken)) {
-    throw "Unable to extract a bearer token from a365 develop get-token output"
+    throw "Failed to acquire bearer token"
 }
 
+Write-Host ""
+Write-Host "Token acquired successfully (length: $($bearerToken.Length) chars)" -ForegroundColor Green
+
+# --- Update .env.playground.user ---
 $userEnvLines = @()
 if (Test-Path $playgroundUserEnvPath) {
-    $userEnvLines = Get-Content $playgroundUserEnvPath
+    $userEnvLines = @(Get-Content $playgroundUserEnvPath)
 }
 
 $updated = $false
@@ -67,11 +161,11 @@ for ($i = 0; $i -lt $userEnvLines.Count; $i++) {
 }
 
 if (-not $updated) {
-    if ($userEnvLines.Count -gt 0 -and -not [string]::IsNullOrWhiteSpace($userEnvLines[$userEnvLines.Count - 1])) {
+    if ($userEnvLines.Count -gt 0 -and -not [string]::IsNullOrWhiteSpace($userEnvLines[-1])) {
         $userEnvLines += ''
     }
     $userEnvLines += "SECRET_BEARER_TOKEN=$bearerToken"
 }
 
 Set-Content -Path $playgroundUserEnvPath -Value $userEnvLines -Encoding UTF8
-Write-Host 'SECRET_BEARER_TOKEN has been updated in env/.env.playground.user'
+Write-Host "SECRET_BEARER_TOKEN updated in env/.env.playground.user" -ForegroundColor Green

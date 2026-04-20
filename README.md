@@ -1,28 +1,68 @@
-# OpenAI Sample Agent - Python
+# A365 Governed Pro-Code Agent Starter
 
-This sample demonstrates how to build an agent using OpenAI in Python with the Microsoft Agent 365 SDK. It covers:
+A reference **pro-code agent** that integrates with **Microsoft Agent 365 (A365)** as the enterprise governance layer — no Copilot Studio dependency. This starter demonstrates:
 
-- **Observability**: End-to-end tracing, caching, and monitoring for agent applications
+- **Governance**: A365 Security Blueprint with automatic posture inheritance across agent instances
+- **Identity**: Entra-backed agent identity with tenant-owned UPN and Teams presence
+- **Observability**: End-to-end OpenTelemetry tracing to the A365 backend
 - **Notifications**: Services and models for managing user notifications
-- **Tools**: Model Context Protocol tools for building advanced agent solutions
-- **Hosting Patterns**: Hosting with Microsoft 365 Agents SDK
+- **Tools**: Model Context Protocol (MCP) tools for Mail and Calendar
+- **Hosting Patterns**: Hosting with the Microsoft 365 Agents SDK
 
-This sample uses the [Microsoft Agent 365 SDK for Python](https://github.com/microsoft/Agent365-python).
+The starter uses the [Microsoft Agent 365 SDK for Python](https://github.com/microsoft/Agent365-python).
 
-For comprehensive documentation and guidance on building agents with the Microsoft Agent 365 SDK, including how to add tooling, observability, and notifications, visit the [Microsoft Agent 365 Developer Documentation](https://learn.microsoft.com/en-us/microsoft-agent-365/developer/).
+For deeper context, see:
+
+- [docs/learning-guide.md](docs/learning-guide.md) — Concept-first A365 walkthrough with links to the official docs
+- [docs/code-walkthrough.md](docs/code-walkthrough.md) — Stage-by-stage trace of a request from F5 to a response (with diagrams)
+- [docs/setup-walkthrough.md](docs/setup-walkthrough.md) — Stage-by-stage map of what `setup-environment.ps1` provisions (with diagrams)
+- [docs/project-scope.md](docs/project-scope.md) — Scope, success criteria, gap analysis (read the **TL;DR** at the top for current status)
+- [docs/blueprint-policy.md](docs/blueprint-policy.md) — Security Blueprint policy set
+- [docs/design.md](docs/design.md) — Runtime + governance-plane architecture
+- [docs/evidence/](docs/evidence/) — Captured proof for success criteria (multi-instance inheritance, teardown→setup round-trip)
+- [scripts/README.md](scripts/README.md) — What every automation script does and when to run it
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — Known failure modes and resolutions
+
+For general A365 developer documentation, visit [Microsoft Agent 365 Developer Documentation](https://learn.microsoft.com/en-us/microsoft-agent-365/developer/).
+
+## Quickstart
+
+```pwsh
+# 1. Provision Azure OpenAI + Entra client app + A365 blueprint + agent identity + tokens.
+#    Narrated step-by-step. Two WAM popups will appear inside `a365 setup all`; accept them.
+pwsh -NoProfile -File scripts/setup-environment.ps1
+
+# 2. Mint the short-lived bearer token Playground needs on the first turn (interactive device-code).
+pwsh -NoProfile -File .vscode/scripts/refresh-bearer-token.ps1
+
+# 3. Open the M365 Agents Toolkit panel in VS Code, then press F5 → Debug in Microsoft 365 Agents Playground.
+```
+
+To wipe the tenant and start over (the round-trip reproducibility test):
+
+```pwsh
+pwsh -NoProfile -File scripts/teardown-environment.ps1 -SkipConfirmation
+pwsh -NoProfile -File scripts/setup-environment.ps1
+```
+
+The most recent reference round-trip with identifiers and per-step outcomes is in [docs/evidence/round-trip.md](docs/evidence/round-trip.md).
 
 ## Prerequisites
->
-> To run the template in your local dev machine, you will need:
->
-> - [Python](https://www.python.org/), supported versions: 3.11 or higher
-> - [Microsoft 365 Agents Toolkit Visual Studio Code Extension](https://aka.ms/teams-toolkit) latest version
-> - Prepare your own Azure OpenAI / OpenAI API credentials
-> - Azure CLI signed in with `az login`
 
-> - Microsoft Agent 365 SDK
-> - OpenAI Agents SDK (openai-agents)
-> - A365 CLI: Required for agent deployment and management.
+To run this starter on your local dev machine you will need:
+
+- [Python 3.11+](https://www.python.org/)
+- [Microsoft 365 Agents Toolkit](https://aka.ms/teams-toolkit) VS Code extension (latest)
+- Azure OpenAI or OpenAI API credentials
+- Azure CLI signed in via `az login`
+- PowerShell 7+ (`pwsh`) — required by the A365 CLI; see [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+- A365 CLI — required for blueprint + agent identity provisioning
+
+The following SDKs are pulled in automatically by `pyproject.toml`:
+
+- Microsoft Agent 365 SDK
+- Microsoft 365 Agents SDK
+- OpenAI Agents SDK (`openai-agents`)
 
 ## Python Environment Configuration
 
@@ -52,14 +92,16 @@ into the LLM system instructions for personalized responses.
 
 ## Running the Agent in Microsoft 365 Agents Playground
 
-1. First, select the Microsoft 365 Agents Toolkit icon on the left in the VS Code toolbar.
-1. In file *env/.env.playground.user*, fill in your Azure OpenAI key `SECRET_AZURE_OPENAI_API_KEY=<your-key>`, endpoint `AZURE_OPENAI_ENDPOINT=<your-endpoint>`, and deployment name `AZURE_OPENAI_DEPLOYMENT_NAME=<your-deployment>` if you're using Azure OpenAI.
-1. In file *env/.env.playground.user*, fill in your OpenAI key `SECRET_OPENAI_API_KEY=<your-key>` if you're using OpenAI.
-1. In file *env/.env.playground*, fill in your custom app registration client id `CLIENT_APP_ID`.
-1. Press F5 to start debugging which launches your agent in Microsoft 365 Agents Playground using a web browser. Select `Debug in Microsoft 365 Agents Playground`.
-1. You can send any message to get a response from the agent.
+If you ran the [Quickstart](#quickstart), all four env-file values below are already populated. Skip to step 5.
 
-**Congratulations**! You are running an agent that can now interact with users in Microsoft 365 Agents Playground.
+1. Select the Microsoft 365 Agents Toolkit icon on the left in the VS Code toolbar.
+1. In *env/.env.playground.user*, set your Azure OpenAI key `SECRET_AZURE_OPENAI_API_KEY`, endpoint `AZURE_OPENAI_ENDPOINT`, and deployment name `AZURE_OPENAI_DEPLOYMENT_NAME` (or `SECRET_OPENAI_API_KEY` if using OpenAI direct).
+1. In *env/.env.playground*, set `CLIENT_APP_ID` to the Entra client app id created by `scripts/setup-environment.ps1`.
+1. Run `pwsh -NoProfile -File .vscode/scripts/refresh-bearer-token.ps1` to mint a fresh `SECRET_BEARER_TOKEN` (4-minute TTL — do this immediately before F5).
+1. Press F5 to start debugging. Select **Debug in Microsoft 365 Agents Playground**.
+1. Send any message to get a response from the agent.
+
+**Congratulations** — you are running an agent that can interact with users in Microsoft 365 Agents Playground.
 
 ## Handling Agent Install and Uninstall
 
@@ -134,15 +176,12 @@ finally:
 
 To set up and test this agent, refer to the [Configure Agent Testing](https://learn.microsoft.com/en-us/microsoft-agent-365/developer/testing?tabs=python) guide for complete instructions.
 
-For a detailed explanation of the agent code and implementation, see the [Agent Code Walkthrough](AGENT-CODE-WALKTHROUGH.md).
-
 ## Support
 
 For issues, questions, or feedback:
 
-- **Issues**: Please file issues in the [GitHub Issues](https://github.com/microsoft/Agent365-python/issues) section
+- **Issues**: File issues in the [GitHub Issues](https://github.com/microsoft/Agent365-python/issues) section
 - **Documentation**: See the [Microsoft Agents 365 Developer documentation](https://learn.microsoft.com/en-us/microsoft-agent-365/developer/)
-- **Security**: For security issues, please see [SECURITY.md](SECURITY.md)
 
 ## Contributing
 
@@ -167,4 +206,4 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-Licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
+Licensed under the MIT License.

@@ -55,6 +55,9 @@ from token_cache import cache_agentic_token
 ms_agents_logger = logging.getLogger("microsoft_agents")
 ms_agents_logger.addHandler(logging.StreamHandler())
 ms_agents_logger.setLevel(logging.INFO)
+# Prevent records from also propagating to the root logger (which has its own
+# handler via basicConfig in agent.py) — otherwise every SDK log line appears twice.
+ms_agents_logger.propagate = False
 
 logger = logging.getLogger(__name__)
 

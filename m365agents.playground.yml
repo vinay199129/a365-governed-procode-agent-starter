@@ -32,6 +32,8 @@ deploy:
         # OPENAI_API_KEY: ${{SECRET_OPENAI_API_KEY}}
         BEARER_TOKEN: ${{SECRET_BEARER_TOKEN}}
         USE_AGENTIC_AUTH: ${{USE_AGENTIC_AUTH}}
+        ENABLE_A365_OBSERVABILITY_EXPORTER: ${{ENABLE_A365_OBSERVABILITY_EXPORTER}}
+        OBS_S2S_TOKEN: ${{SECRET_OBS_S2S_TOKEN}}
         connectionsMap__0__serviceUrl: ${{connectionsMap__0__serviceUrl}}
         connectionsMap__0__connection: ${{connectionsMap__0__connection}}
         agentic_type: ${{agentic_type}}
