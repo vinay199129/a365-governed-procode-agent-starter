@@ -1,17 +1,12 @@
 name: pages
 
-# Build the Docusaurus site under /website and deploy it to GitHub Pages.
-# Enable in repo Settings → Pages → Source: GitHub Actions.
+# Static-site Pages deployment. No build step — just upload the repo
+# (minus heavy folders) so GitHub Pages serves index.html / docs.html /
+# learning-series.html and the markdown files they fetch via JS.
 
 on:
   push:
-    # Default branch on this repo is `master`. Add `main` too for portability.
     branches: [master, main]
-    paths:
-      - "website/**"
-      - "docs/**"
-      - "TROUBLESHOOTING.md"
-      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -19,47 +14,37 @@ permissions:
   pages: write
   id-token: write
 
-# Serialize deploys for the Pages environment.
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  build:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: website
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          # No `cache: "npm"` — the repo doesn't ship a package-lock.json,
-          # and setup-node fails fast when the cache-dependency-path is missing.
-
-      - name: Install dependencies
-        # Use `npm install` (not `npm ci`) because there is no lockfile.
-        run: npm install --no-audit --no-fund
-
-      - name: Build site
-        run: npm run build
+      - name: Stage site files
+        # Copy only what the static site needs into a clean folder so the
+        # uploaded artifact is small and predictable.
+        run: |
+          mkdir _site
+          cp -r index.html docs.html learning-series.html .nojekyll _site/
+          cp -r assets _site/
+          cp -r docs _site/
+          cp -r posts _site/
+          cp -r images _site/ 2>/dev/null || true
+          cp README.md _site/ 2>/dev/null || true
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: website/build
+          path: _site
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

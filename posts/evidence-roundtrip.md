@@ -45,5 +45,5 @@ pwsh -NoProfile -File scripts/smoke-test.ps1
 
 ## Go deeper
 
-- Canonical evidence: [Round-trip](/docs/evidence/round-trip)
-- [Setup walkthrough](/docs/setup-walkthrough)
+- Canonical evidence: [Round-trip](docs.html?doc=evidence/round-trip)
+- [Setup walkthrough](docs.html?doc=setup-walkthrough)

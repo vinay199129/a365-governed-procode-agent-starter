@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A365 Governed Pro-Code Agent Starter</title>
+  <meta name="description" content="Build governed, audited AI agents on Microsoft Agent 365 — without Copilot Studio." />
+  <link rel="icon" type="image/svg+xml" href="assets/img/logo.svg" />
+  <link rel="stylesheet" href="assets/css/site.css" />
+</head>
+<body>
+  <div id="announcement-bar">
+    🚀 <strong>Microsoft Agent 365 reaches GA on May 1, 2026.</strong>
+    Until then, ingest-side features require
+    <a href="https://adoption.microsoft.com/copilot/frontier-program/" target="_blank" rel="noopener">Frontier preview</a>.
+  </div>
+
+  <header class="site-header">
+    <div class="container nav-row">
+      <a class="brand" href="./">
+        <img src="assets/img/logo.svg" alt="" width="28" height="28" />
+        <span>A365 Starter</span>
+      </a>
+      <nav class="primary-nav">
+        <a href="docs.html?doc=quickstart">Quickstart</a>
+        <a href="docs.html?doc=learning-guide">Docs</a>
+        <a href="learning-series.html">Learning Series</a>
+        <a href="https://github.com/vinay199129/a365-governed-procode-agent-starter" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <span class="hero-badge">Reference Implementation · Microsoft Agent 365</span>
+      <h1>A365 Governed Pro-Code Agent Starter</h1>
+      <p class="hero-sub">
+        Build governed, audited AI agents on Microsoft Agent 365 — without Copilot Studio.
+        Identity, blueprint, observability, and lifecycle in one runnable reference.
+      </p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="docs.html?doc=quickstart">Get started</a>
+        <a class="btn btn-secondary" href="learning-series.html">Read the learning series</a>
+      </div>
+      <div class="quick-pills">
+        <a class="pill" href="docs.html?doc=quickstart">
+          <span class="pill-label">QUICKSTART</span><span class="pill-text">Provision in &lt; 1 hour</span>
+        </a>
+        <a class="pill" href="docs.html?doc=learning-guide">
+          <span class="pill-label">CONCEPTS</span><span class="pill-text">What is Agent 365?</span>
+        </a>
+        <a class="pill" href="docs.html?doc=design">
+          <span class="pill-label">ARCHITECTURE</span><span class="pill-text">System design</span>
+        </a>
+        <a class="pill" href="docs.html?doc=blueprint-policy">
+          <span class="pill-label">GOVERNANCE</span><span class="pill-text">Security blueprint</span>
+        </a>
+        <a class="pill" href="docs.html?doc=code-walkthrough">
+          <span class="pill-label">CODE</span><span class="pill-text">F5 → response trace</span>
+        </a>
+        <a class="pill" href="docs.html?doc=evidence/round-trip">
+          <span class="pill-label">EVIDENCE</span><span class="pill-text">Reproducibility proof</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <section class="section">
+      <div class="container">
+        <h2 class="section-title">Deep dive</h2>
+        <p class="section-sub">
+          Explore the starter from concept to evidence — every card links to runnable code in this repository.
+        </p>
+        <div class="card-grid">
+          <article class="card">
+            <h3>Quick Start</h3>
+            <p>Provision Azure OpenAI, Entra app, A365 blueprint, and agent identity in one script.</p>
+            <ul>
+              <li><a href="docs.html?doc=quickstart">Quickstart guide →</a></li>
+              <li><a href="docs.html?doc=setup-walkthrough">Setup walkthrough →</a></li>
+              <li><a href="docs.html?doc=troubleshooting">Troubleshooting →</a></li>
+            </ul>
+          </article>
+          <article class="card">
+            <h3>Build with A365</h3>
+            <p>Pro-code agents that plug into Agent 365 for governance, identity, and audit.</p>
+            <ul>
+              <li><a href="docs.html?doc=learning-guide">Concept walkthrough →</a></li>
+              <li><a href="docs.html?doc=code-walkthrough">Request flow →</a></li>
+              <li><a href="docs.html?doc=design">Design →</a></li>
+            </ul>
+          </article>
+          <article class="card">
+            <h3>Plan &amp; Architect</h3>
+            <p>Understand the moving parts before touching code — host, agent, MCP tools, governance.</p>
+            <ul>
+              <li><a href="docs.html?doc=design">Architecture overview →</a></li>
+              <li><a href="docs.html?doc=project-scope">Scope &amp; gap analysis →</a></li>
+              <li><a href="docs.html?doc=blueprint-policy">Security blueprint →</a></li>
+            </ul>
+          </article>
+          <article class="card">
+            <h3>Prove &amp; Extend</h3>
+            <p>Captured evidence for reproducibility and inheritance, plus extension patterns.</p>
+            <ul>
+              <li><a href="docs.html?doc=evidence/multi-instance-inheritance">Multi-instance inheritance →</a></li>
+              <li><a href="docs.html?doc=evidence/round-trip">Round-trip reproducibility →</a></li>
+              <li><a href="learning-series.html">Learning series →</a></li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt">
+      <div class="container">
+        <h2 class="section-title">Collections</h2>
+        <p class="section-sub">Browse content bundles by topic.</p>
+        <div class="collection-grid">
+          <a class="collection-card" href="docs.html?doc=blueprint-policy">
+            <div class="collection-head">
+              <span class="collection-name">governance</span>
+              <span class="badge badge-stable">STABLE</span>
+            </div>
+            <p>Blueprint policy, scope inheritance, agent identity</p>
+            <span class="collection-count">6 docs</span>
+          </a>
+          <a class="collection-card" href="docs.html?doc=setup-walkthrough">
+            <div class="collection-head">
+              <span class="collection-name">setup</span>
+              <span class="badge badge-stable">STABLE</span>
+            </div>
+            <p>Provisioning scripts, environment config, teardown</p>
+            <span class="collection-count">4 docs</span>
+          </a>
+          <a class="collection-card" href="docs.html?doc=design">
+            <div class="collection-head">
+              <span class="collection-name">architecture</span>
+              <span class="badge badge-stable">STABLE</span>
+            </div>
+            <p>Host pattern, MCP tools, observability</p>
+            <span class="collection-count">5 docs</span>
+          </a>
+          <a class="collection-card" href="docs.html?doc=learning-guide">
+            <div class="collection-head">
+              <span class="collection-name">concepts</span>
+              <span class="badge badge-stable">STABLE</span>
+            </div>
+            <p>A365 building blocks, what works pre-Frontier</p>
+            <span class="collection-count">3 docs</span>
+          </a>
+          <a class="collection-card" href="docs.html?doc=evidence/round-trip">
+            <div class="collection-head">
+              <span class="collection-name">evidence</span>
+              <span class="badge badge-preview">PREVIEW</span>
+            </div>
+            <p>Captured proof for inheritance and reproducibility</p>
+            <span class="collection-count">2 docs</span>
+          </a>
+          <a class="collection-card" href="learning-series.html">
+            <div class="collection-head">
+              <span class="collection-name">learning-series</span>
+              <span class="badge badge-stable">STABLE</span>
+            </div>
+            <p>Blog-style guided reading path with try-it-yourself sections</p>
+            <span class="collection-count">7 posts</span>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <h4>Documentation</h4>
+        <ul>
+          <li><a href="docs.html?doc=quickstart">Quickstart</a></li>
+          <li><a href="docs.html?doc=learning-guide">Concepts</a></li>
+          <li><a href="docs.html?doc=design">Architecture</a></li>
+          <li><a href="docs.html?doc=setup-walkthrough">Setup walkthrough</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Governance</h4>
+        <ul>
+          <li><a href="docs.html?doc=blueprint-policy">Blueprint policy</a></li>
+          <li><a href="docs.html?doc=evidence/multi-instance-inheritance">Multi-instance evidence</a></li>
+          <li><a href="docs.html?doc=evidence/round-trip">Round-trip evidence</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="learning-series.html">Learning Series</a></li>
+          <li><a href="docs.html?doc=troubleshooting">Troubleshooting</a></li>
+          <li><a href="https://learn.microsoft.com/en-us/microsoft-agent-365/developer/" target="_blank" rel="noopener">Microsoft Agent 365 docs</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Community</h4>
+        <ul>
+          <li><a href="https://github.com/vinay199129/a365-governed-procode-agent-starter" target="_blank" rel="noopener">GitHub</a></li>
+          <li><a href="https://github.com/vinay199129/a365-governed-procode-agent-starter/issues" target="_blank" rel="noopener">Issues</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container copyright">
+      © <span id="year"></span> A365 Governed Pro-Code Agent Starter contributors.
+    </div>
+  </footer>
+
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

@@ -29,7 +29,7 @@ so your code can focus on the agent's job, not the paperwork.
   the directory.
 - **Agent Instance** — each running deployment of your agent. Instances
   *inherit* the blueprint posture byte-for-byte (no per-instance config
-  drift). See the [multi-instance inheritance evidence post](./evidence-multi-instance-inheritance.md).
+  drift). See the [multi-instance inheritance evidence post](learning-series.html?post=evidence-multi-instance-inheritance).
 - **Observability** — OpenTelemetry spans flow to the A365 backend so
   admins can audit what the agent did, on whose behalf.
 - **Pro-code, not Copilot Studio** — A365 is SDK-first. You bring your
@@ -66,10 +66,10 @@ code docs/learning-guide.md
 ```
 
 When you're ready to actually run something, jump to the
-[setup walkthrough post](./setup-walkthrough.md).
+[setup walkthrough post](learning-series.html?post=setup-walkthrough).
 
 ## Go deeper
 
-- Canonical doc: [Concepts: Learning guide](/docs/learning-guide)
+- Canonical doc: [Concepts: Learning guide](docs.html?doc=learning-guide)
 - Microsoft Agent 365 developer docs: <https://learn.microsoft.com/en-us/microsoft-agent-365/developer/>
 - Frontier preview program: <https://adoption.microsoft.com/copilot/frontier-program/>

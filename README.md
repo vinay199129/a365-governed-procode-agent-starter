@@ -13,10 +13,11 @@ The starter uses the [Microsoft Agent 365 SDK for Python](https://github.com/mic
 
 > **🌐 Documentation site:** <https://vinay199129.github.io/a365-governed-procode-agent-starter/>
 >
-> A polished Docusaurus site with hero landing, sidebar nav, and a
-> guided learning series ships with the repo under [`website/`](website/).
-> It auto-deploys to GitHub Pages on push to `main` — see
-> [`website/README.md`](website/README.md) for local preview and config.
+> A polished static site (zero build, plain HTML/CSS) ships at the repo
+> root: [`index.html`](index.html), [`docs.html`](docs.html),
+> [`learning-series.html`](learning-series.html). It auto-deploys to
+> GitHub Pages on push to `master` via
+> [`.github/workflows/pages.yml`](.github/workflows/pages.yml).
 
 For deeper context, see:
 

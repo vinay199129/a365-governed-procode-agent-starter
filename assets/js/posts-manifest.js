@@ -1,0 +1,13 @@
+/**
+ * Learning Series posts manifest.
+ * Files live in posts/ at the repo root.
+ */
+window.POSTS_MANIFEST = [
+  { slug: 'what-is-agent-365', title: 'What is Microsoft Agent 365 — and why pro-code?', date: '2026-04-15', path: 'posts/what-is-agent-365.md' },
+  { slug: 'architecture-and-design', title: 'Architecture & design of the pro-code agent starter', date: '2026-04-16', path: 'posts/architecture-and-design.md' },
+  { slug: 'setup-walkthrough', title: 'Setup walkthrough — what setup-environment.ps1 actually provisions', date: '2026-04-17', path: 'posts/setup-walkthrough.md' },
+  { slug: 'code-walkthrough', title: 'Code walkthrough — from F5 to a response', date: '2026-04-18', path: 'posts/code-walkthrough.md' },
+  { slug: 'security-blueprint-policy', title: 'The Security Blueprint — one policy, every instance', date: '2026-04-19', path: 'posts/security-blueprint-policy.md' },
+  { slug: 'evidence-multi-instance-inheritance', title: 'Evidence — multi-instance blueprint inheritance', date: '2026-04-20', path: 'posts/evidence-multi-instance-inheritance.md' },
+  { slug: 'evidence-roundtrip', title: 'Evidence — teardown → setup round-trip reproducibility', date: '2026-04-21', path: 'posts/evidence-roundtrip.md' },
+];

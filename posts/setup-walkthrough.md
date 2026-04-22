@@ -47,5 +47,5 @@ code a365.generated.config.json
 
 ## Go deeper
 
-- Canonical doc: [Setup walkthrough](/docs/setup-walkthrough)
-- [Troubleshooting](/docs/troubleshooting)
+- Canonical doc: [Setup walkthrough](docs.html?doc=setup-walkthrough)
+- [Troubleshooting](docs.html?doc=troubleshooting)

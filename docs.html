@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Docs · A365 Starter</title>
+  <link rel="icon" type="image/svg+xml" href="assets/img/logo.svg" />
+  <link rel="stylesheet" href="assets/css/site.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-row">
+      <a class="brand" href="./">
+        <img src="assets/img/logo.svg" alt="" width="28" height="28" />
+        <span>A365 Starter</span>
+      </a>
+      <nav class="primary-nav">
+        <a href="docs.html?doc=quickstart">Quickstart</a>
+        <a href="docs.html?doc=learning-guide">Docs</a>
+        <a href="learning-series.html">Learning Series</a>
+        <a href="https://github.com/vinay199129/a365-governed-procode-agent-starter" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="docs-layout container">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="doc-content">
+      <article id="doc" class="markdown-body">Loading…</article>
+      <p class="edit-link" id="edit-link"></p>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container copyright">© <span id="year"></span> A365 Governed Pro-Code Agent Starter contributors.</div>
+  </footer>
+
+  <!-- Markdown + syntax highlighting from CDN. No build step required. -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-powershell.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+  <script src="assets/js/docs-manifest.js"></script>
+  <script src="assets/js/site.js"></script>
+  <script src="assets/js/docs.js"></script>
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

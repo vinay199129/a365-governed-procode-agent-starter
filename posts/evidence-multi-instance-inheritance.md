@@ -44,5 +44,5 @@ git diff --no-index a.json b.json   # expect: no diff
 
 ## Go deeper
 
-- Canonical evidence: [Multi-instance inheritance](/docs/evidence/multi-instance-inheritance)
-- [Blueprint policy](/docs/blueprint-policy)
+- Canonical evidence: [Multi-instance inheritance](docs.html?doc=evidence/multi-instance-inheritance)
+- [Blueprint policy](docs.html?doc=blueprint-policy)
