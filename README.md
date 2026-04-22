@@ -11,6 +11,11 @@ A reference **pro-code agent** that integrates with **Microsoft Agent 365 (A365)
 
 The starter uses the [Microsoft Agent 365 SDK for Python](https://github.com/microsoft/Agent365-python).
 
+> **New here?** A blog-style learning series under [`blog/`](blog/) re-frames
+> these docs as a guided reading path, with **Try it yourself** sections in
+> every post. It builds and publishes to GitHub Pages automatically — see
+> [`blog/README.md`](blog/README.md).
+
 For deeper context, see:
 
 - [docs/learning-guide.md](docs/learning-guide.md) — Concept-first A365 walkthrough with links to the official docs
