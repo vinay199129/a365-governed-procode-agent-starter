@@ -1,13 +1,15 @@
 name: pages
 
-# Build and deploy the Jekyll site under /blog to GitHub Pages.
+# Build the Docusaurus site under /website and deploy it to GitHub Pages.
 # Enable in repo Settings → Pages → Source: GitHub Actions.
 
 on:
   push:
     branches: [main]
     paths:
-      - "blog/**"
+      - "website/**"
+      - "docs/**"
+      - "TROUBLESHOOTING.md"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -16,7 +18,7 @@ permissions:
   pages: write
   id-token: write
 
-# Cancel in-progress runs for the same ref so deploys serialise.
+# Serialize deploys for the Pages environment.
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -26,34 +28,30 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: blog
+        working-directory: website
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          ruby-version: "3.2"
-          bundler-cache: true
-          working-directory: blog
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: website/package-lock.json
 
-      - name: Configure Pages
-        id: pages
-        uses: actions/configure-pages@v5
+      - name: Install dependencies
+        # Use `npm install` (not `npm ci`) because the repo doesn't ship a
+        # lockfile by default — first build will generate one.
+        run: npm install --no-audit --no-fund
 
-      - name: Build with Jekyll
-        run: |
-          bundle exec jekyll build \
-            --baseurl "${{ steps.pages.outputs.base_path }}" \
-            --destination ./_site
-        env:
-          JEKYLL_ENV: production
+      - name: Build site
+        run: npm run build
 
-      - name: Upload artifact
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: blog/_site
+          path: website/build
 
   deploy:
     needs: build

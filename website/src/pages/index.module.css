@@ -1,0 +1,240 @@
+/* Landing page styles — HVE-Core inspired. */
+
+.hero {
+  background: linear-gradient(135deg, #0a3d91 0%, #1564de 100%);
+  color: white;
+  padding: 5rem 0 4rem;
+  text-align: center;
+}
+
+.heroBadge {
+  display: inline-block;
+  padding: 0.35rem 0.85rem;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+
+.heroTitle {
+  font-size: 3rem;
+  font-weight: 800;
+  margin: 0 0 1rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.heroSubtitle {
+  font-size: 1.25rem;
+  margin: 0 auto 2.25rem;
+  max-width: 720px;
+  opacity: 0.92;
+  line-height: 1.5;
+}
+
+.heroButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 3rem;
+}
+
+.quickPills {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.pill {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0.65rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  color: white !important;
+  text-decoration: none !important;
+  transition: all 0.15s ease;
+  min-width: 165px;
+}
+
+.pill:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.pillLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+}
+
+.pillText {
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-top: 0.15rem;
+}
+
+.section {
+  padding: 4rem 0;
+}
+
+.sectionAlt {
+  background: var(--ifm-color-emphasis-100);
+}
+
+.sectionTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+
+.sectionSubtitle {
+  font-size: 1.05rem;
+  text-align: center;
+  margin: 0 auto 2.5rem;
+  max-width: 640px;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  background: var(--ifm-background-color);
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 10px;
+  padding: 1.5rem;
+  transition: all 0.15s ease;
+}
+
+.card:hover {
+  border-color: var(--ifm-color-primary);
+  box-shadow: 0 4px 16px rgba(10, 61, 145, 0.08);
+}
+
+.cardTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  color: var(--ifm-color-primary);
+}
+
+.cardBlurb {
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.95rem;
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.cardLinks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.cardLinks li {
+  margin: 0.4rem 0;
+}
+
+.cardLinks a {
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.cardLinks a:hover {
+  text-decoration: underline;
+}
+
+.collectionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.collectionCard {
+  display: block;
+  padding: 1.25rem 1.5rem;
+  background: var(--ifm-background-color);
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  text-decoration: none !important;
+  color: inherit !important;
+  transition: all 0.15s ease;
+}
+
+.collectionCard:hover {
+  border-color: var(--ifm-color-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.collectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.collectionName {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ifm-color-primary);
+}
+
+.collectionBadge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0.15rem 0.5rem;
+  background: #2da44e;
+  color: white;
+  border-radius: 4px;
+}
+
+.badgePreview {
+  background: #bf8700;
+}
+
+.collectionBlurb {
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+  margin: 0 0 0.75rem;
+  line-height: 1.45;
+}
+
+.collectionCount {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-600);
+}
+
+@media (max-width: 768px) {
+  .heroTitle {
+    font-size: 2.1rem;
+  }
+  .heroSubtitle {
+    font-size: 1.05rem;
+  }
+  .heroButtons {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0 1rem;
+  }
+}

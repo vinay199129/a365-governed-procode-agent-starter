@@ -11,10 +11,12 @@ A reference **pro-code agent** that integrates with **Microsoft Agent 365 (A365)
 
 The starter uses the [Microsoft Agent 365 SDK for Python](https://github.com/microsoft/Agent365-python).
 
-> **New here?** A blog-style learning series under [`blog/`](blog/) re-frames
-> these docs as a guided reading path, with **Try it yourself** sections in
-> every post. It builds and publishes to GitHub Pages automatically — see
-> [`blog/README.md`](blog/README.md).
+> **🌐 Documentation site:** <https://vinay199129.github.io/a365-governed-procode-agent-starter/>
+>
+> A polished Docusaurus site with hero landing, sidebar nav, and a
+> guided learning series ships with the repo under [`website/`](website/).
+> It auto-deploys to GitHub Pages on push to `main` — see
+> [`website/README.md`](website/README.md) for local preview and config.
 
 For deeper context, see:
 
