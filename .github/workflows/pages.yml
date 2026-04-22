@@ -38,12 +38,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: website/package-lock.json
+          # No `cache: "npm"` — the repo doesn't ship a package-lock.json,
+          # and setup-node fails fast when the cache-dependency-path is missing.
 
       - name: Install dependencies
-        # Use `npm install` (not `npm ci`) because the repo doesn't ship a
-        # lockfile by default — first build will generate one.
+        # Use `npm install` (not `npm ci`) because there is no lockfile.
         run: npm install --no-audit --no-fund
 
       - name: Build site
