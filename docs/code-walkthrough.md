@@ -59,7 +59,68 @@ A stage-by-stage trace of what happens when a user sends a message to the agent.
        │  10. context.send_activity(response)              │
        └──────────────────────────────────────────────────┘
 ```
+---
 
+## Pattern: super-agent / agent-to-agent (A2A) delegation
+
+A *super-agent* fronts a user turn and delegates sub-tasks to one or more
+specialist agents. A365 makes this safe by giving each delegate its own
+blueprint-derived identity and by carrying that identity end-to-end on the wire.
+
+```
+   User turn                                 Delegate(s)
+   ─────────                                 ────────────
+       │
+       ▼
+   ┌─────────────────────────┐      Tier-3 OBO call
+   │  super-agent              ├───────────────────┐
+   │  blueprint A              │                  ▼
+   │  identity "BookingBot"    │   ┌─────────────────┐
+   │                           │   │ specialist     │
+   │  Decides: "this is a      │   │ blueprint B    │
+   │  travel + calendar req."  │   │ "TravelAgent"  │
+   │                           │   └─────────┬──────┘
+   │  Calls TravelAgent +      │             │
+   │  CalendarAgent in         │             ▼
+   │  parallel.                │         own MCP allow-list
+   └─────────────────────────┘         own OTel spans
+```
+
+**What A365 contributes to this pattern**
+
+| Concern | Single agent | Super-agent + delegates |
+|---|---|---|
+| Identity per call | One agent identity | Each delegate has its own blueprint + identity |
+| Authorization | Blueprint A's allow-list | Each delegate enforces *its own* blueprint allow-list — super-agent cannot smuggle in extra scopes |
+| Audit attribution | All spans tagged with agent A | Each delegate emits its own spans tagged with delegate's `agent_id` |
+| Revocation | Disable blueprint A | Disable any blueprint independently — finer-grained kill switch |
+
+**Wiring it in this repo (sketch)**
+
+The host (`host_agent_server.py`) loads one `AgentInterface` today. To run a
+super-agent pattern you have two clean options:
+
+1. **In-process delegates.** Compose multiple `AgentInterface` instances inside a
+   wrapper that itself implements `AgentInterface`. The wrapper picks which
+   delegate to call based on intent classification, then forwards `context` so
+   each delegate's own `auth.exchange_token(...)` mints a token under *its* blueprint.
+   This is the simplest path — nothing on the network changes; only the
+   `process_user_message` body fans out.
+2. **Out-of-process delegates (true A2A).** Each delegate runs as its own
+   hosted agent (own blueprint, own UPN). The super-agent calls them as
+   tools — either via A365 MCP if the delegate is exposed that way, or via
+   plain HTTPS with an agentic-identity token in the Authorization header.
+   Pick this when delegates are owned by different teams or need independent
+   deploy cadence.
+
+**Sibling LLM frameworks**
+
+The `AgentInterface` contract is framework-neutral. [agent.py](../agent.py) uses
+the OpenAI Agents SDK; [agent_msaf.py](../agent_msaf.py) is a parallel
+implementation that swaps in the **Microsoft Agent Framework**. A super-agent
+can freely mix delegates: e.g. a planning loop in MSAF that fans out to
+specialist OpenAI Agents SDK delegates. The A365 governance plane (blueprint,
+identity, MCP allow-list, OTel exporter) is identical regardless.
 ---
 
 ## Stage A — Process boot ([start_with_generic_host.py](../start_with_generic_host.py))

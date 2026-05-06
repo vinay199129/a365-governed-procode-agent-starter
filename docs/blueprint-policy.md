@@ -22,7 +22,7 @@ The blueprint SP grants these scopes (all `consentType=AllPrincipals`); every in
 | Resource | Scopes |
 |---|---|
 | Microsoft Graph | `User.Read.All`, `Mail.Send`, `Mail.ReadWrite`, `Chat.Read`, `Chat.ReadWrite`, `Files.Read.All`, `Sites.Read.All`, `ChannelMessage.Read.All`, `ChannelMessage.Send`, `Files.ReadWrite.All` |
-| Work IQ Tools | `McpServers.Mail.All`, `McpServersMetadata.Read.All`, `McpServers.Calendar.All` |
+| Work IQ Tools | `McpServers.Mail.All`, `McpServersMetadata.Read.All`, `McpServers.Calendar.All`, `McpServers.SharePoint.All`, `McpServers.Teams.All` |
 | Messaging Bot API Application | `Authorization.ReadWrite`, `user_impersonation` |
 | Agent365Observability | `user_impersonation`, `Agent365.Observability.OtelWrite` |
 | Power Platform API | `Connectivity.Connections.Read` |
@@ -46,6 +46,8 @@ allow-list; instances cannot call MCP servers not listed here.
 |---|---|---|
 | `mcp_MailTools` | `https://agent365.svc.cloud.microsoft/agents/servers/mcp_MailTools` | `McpServers.Mail.All` |
 | `mcp_CalendarTools` | `https://agent365.svc.cloud.microsoft/agents/servers/mcp_CalendarTools` | `McpServers.Calendar.All` |
+| `mcp_SharePointTools` | `https://agent365.svc.cloud.microsoft/agents/servers/mcp_SharePointTools` | `McpServers.SharePoint.All` |
+| `mcp_TeamsTools` | `https://agent365.svc.cloud.microsoft/agents/servers/mcp_TeamsTools` | `McpServers.Teams.All` |
 
 ## Data & Network Boundaries
 
