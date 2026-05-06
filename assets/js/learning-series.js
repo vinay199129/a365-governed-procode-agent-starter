@@ -34,7 +34,7 @@
       return r.text();
     })
     .then((md) => {
-      target.innerHTML = marked.parse(window.stripFrontMatter(md));
+      target.innerHTML = window.renderMarkdown(window.stripFrontMatter(md), 'posts');
       window.highlightAll();
     })
     .catch((err) => {

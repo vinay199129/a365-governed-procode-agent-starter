@@ -29,6 +29,7 @@ window.DOCS_MANIFEST = [
     section: 'Setup & Operations',
     items: [
       { slug: 'setup-walkthrough', title: 'Setup Walkthrough', path: 'docs/setup-walkthrough.md' },
+      { slug: 'testing', title: 'Testing strategy', path: 'docs/testing.md' },
     ],
   },
   {

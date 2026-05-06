@@ -45,7 +45,7 @@
       return r.text();
     })
     .then((md) => {
-      target.innerHTML = marked.parse(window.stripFrontMatter(md));
+      target.innerHTML = window.renderMarkdown(window.stripFrontMatter(md), 'docs');
       window.highlightAll();
       editLink.innerHTML = `<a href="https://github.com/vinay199129/a365-governed-procode-agent-starter/edit/master/${entry.path}" target="_blank" rel="noopener">Edit this page on GitHub →</a>`;
     })
