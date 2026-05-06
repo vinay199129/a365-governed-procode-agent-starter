@@ -42,14 +42,15 @@ dependencies = [
 requires-python = ">=3.11"
 
 # Package index configuration
-# PyPI is the default/primary source, local packages are fallback
+# PyPI is the default/primary source for the GA Agent 365 SDK packages.
 [[tool.uv.index]]
 name = "pypi"
 url = "https://pypi.org/simple"
 default = true
 
-# Allow pre-release versions for Microsoft Agent 365 SDK packages
-# This ensures we always get the latest features and fixes
+# Pin Microsoft Agent 365 SDK packages to PyPI. Since the GA release
+# (May 1, 2026) the SDK ships stable versions on PyPI; no prerelease
+# allowance is required.
 [tool.uv.sources]
 microsoft_agents_a365_tooling = { index = "pypi" }
 microsoft_agents_a365_tooling_extensions_openai = { index = "pypi" }
@@ -57,9 +58,6 @@ microsoft_agents_a365_observability_core = { index = "pypi" }
 microsoft_agents_a365_observability_extensions_openai = { index = "pypi" }
 microsoft_agents_a365_notifications = { index = "pypi" }
 microsoft_agents_a365_runtime = { index = "pypi" }
-
-[tool.uv]
-prerelease = "allow"
 
 [project.optional-dependencies]
 dev = [

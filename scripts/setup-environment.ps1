@@ -115,7 +115,8 @@ if (-not $pwshPath) {
 $a365Path = Get-Command a365 -ErrorAction SilentlyContinue
 if (-not $a365Path) {
     Write-Host "  [MISSING] A365 CLI - installing..." -ForegroundColor Yellow
-    dotnet tool install --global Microsoft.Agents.A365.DevTools.Cli --prerelease 2>&1 | Out-Null
+    # GA release: install the stable channel (no --prerelease flag).
+    dotnet tool install --global Microsoft.Agents.A365.DevTools.Cli 2>&1 | Out-Null
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
     Write-Host "  [OK] A365 CLI installed" -ForegroundColor Green
 } else {
