@@ -338,3 +338,22 @@ uv run python start_with_generic_host.py
 pip install -e .
 python start_with_generic_host.py
 ```
+
+## Testing
+
+The repo has two independent test loops plus a live HTTP probe that bridges them.
+
+| Layer | Tool | Location | Runs against | Speed |
+|---|---|---|---|---|
+| Python unit | `pytest` | [tests/](../tests/) | Pure Python (no host, no tenant) | < 2s |
+| PowerShell unit | `Pester 5` | `scripts/*.Tests.ps1` | Script source (no live calls) | < 1s |
+| Live probe | `smoke-test.ps1` | [scripts/smoke-test.ps1](../scripts/smoke-test.ps1) | Running host on `:3978` | < 2s |
+
+Run all unit tests before commit:
+
+```powershell
+uv run pytest tests/ -q
+Invoke-Pester scripts/*.Tests.ps1
+```
+
+Full strategy, what each test guards, and how to add new ones: see [docs/testing.md](testing.md).

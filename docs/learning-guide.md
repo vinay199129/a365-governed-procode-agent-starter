@@ -860,7 +860,7 @@ Newcomers: walk these in order, then come back to the concept-to-code map in §4
 5. [Work IQ MCP overview](https://learn.microsoft.com/en-us/microsoft-agent-365/tooling-servers-overview) — governed tools, custom MCP servers, security model.
 6. [Agent 365 Development Lifecycle](https://learn.microsoft.com/en-us/microsoft-agent-365/developer/a365-dev-lifecycle) — how the SDK and CLI work together.
 7. [Responsible AI for Agent 365](https://learn.microsoft.com/en-us/microsoft-agent-365/admin/responsible-ai-overview) — admin-facing policy surfaces.
-8. This starter: [project-scope.md](project-scope.md) → [design.md](design.md) → [blueprint-policy.md](blueprint-policy.md) → [agent.py](../agent.py).
+8. This starter: [project-scope.md](project-scope.md) → [design.md](design.md) → [blueprint-policy.md](blueprint-policy.md) → [agent.py](../agent.py) → [testing.md](testing.md).
 
 ---
 
