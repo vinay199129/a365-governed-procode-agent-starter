@@ -1,15 +1,19 @@
 /**
- * Learning Series viewer — list posts in a sidebar, render selected post in main area.
+ * Learning Series viewer — list posts, render selected post.
+ *
+ * Behavior mirrors docs.js: explicit 404 for unknown slugs, anchor scroll
+ * after async render, dynamic <title> + meta description for sharing.
  */
 (function () {
   const posts = window.POSTS_MANIFEST || [];
+  const list = document.getElementById('post-list');
+  const target = document.getElementById('post-content');
+
   if (posts.length === 0) return;
 
   const params = new URLSearchParams(window.location.search);
   const requestedSlug = params.get('post') || posts[0].slug;
 
-  // Build post list.
-  const list = document.getElementById('post-list');
   const ul = document.createElement('ul');
   posts.forEach((p) => {
     const li = document.createElement('li');
@@ -22,11 +26,22 @@
   });
   list.appendChild(ul);
 
-  // Render selected post.
-  const entry = posts.find((p) => p.slug === requestedSlug) || posts[0];
-  const target = document.getElementById('post-content');
+  const entry = posts.find((p) => p.slug === requestedSlug);
+
+  if (!entry) {
+    document.title = 'Post not found · A365 Starter';
+    const safe = requestedSlug.replace(/[<>&"]/g, (c) => ({
+      '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;',
+    }[c]));
+    target.innerHTML =
+      `<h1>Post not found</h1>` +
+      `<p>No post with slug <code>${safe}</code>. ` +
+      `Pick one from the list, or start with <a href="learning-series.html?post=${encodeURIComponent(posts[0].slug)}">${posts[0].title}</a>.</p>`;
+    return;
+  }
 
   document.title = `${entry.title} · A365 Starter`;
+  setMetaDescription(`${entry.title} — A365 Governed Pro-Code Agent Starter learning series.`);
 
   fetch(entry.path)
     .then((r) => {
@@ -36,8 +51,28 @@
     .then((md) => {
       target.innerHTML = window.renderMarkdown(window.stripFrontMatter(md), 'posts');
       window.highlightAll();
+      scrollToHashAfterRender();
     })
     .catch((err) => {
       target.innerHTML = `<h1>Could not load post</h1><p>${err.message}</p>`;
     });
+
+  function setMetaDescription(text) {
+    let meta = document.querySelector('meta[name="description"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'description');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', text);
+  }
+
+  function scrollToHashAfterRender() {
+    if (!window.location.hash) return;
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    requestAnimationFrame(() => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+    });
+  }
 })();

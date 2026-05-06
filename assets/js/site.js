@@ -10,6 +10,12 @@
 
   const REPO_BASE =
     'https://github.com/vinay199129/a365-governed-procode-agent-starter/blob/master';
+  const REPO_EDIT_BASE =
+    'https://github.com/vinay199129/a365-governed-procode-agent-starter/edit/master';
+
+  // Exposed so docs.js / learning-series.js share a single source of truth.
+  window.A365_REPO_BASE = REPO_BASE;
+  window.A365_REPO_EDIT_BASE = REPO_EDIT_BASE;
 
   /**
    * Rewrite a relative href found inside a rendered markdown file.
@@ -71,6 +77,33 @@
   function buildRenderer(mode) {
     const renderer = new marked.Renderer();
 
+    // Heading: emit an `id` slug so location.hash anchors work.
+    // Marked v12 dropped built-in header IDs; we add a minimal slugger here.
+    const seenSlugs = new Map();
+    function slugify(text) {
+      const base = String(text).toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-');
+      const count = seenSlugs.get(base) || 0;
+      seenSlugs.set(base, count + 1);
+      return count === 0 ? base : `${base}-${count}`;
+    }
+    renderer.heading = function (textOrToken, level) {
+      let depth, text, raw;
+      if (textOrToken && typeof textOrToken === 'object') {
+        depth = textOrToken.depth;
+        raw = textOrToken.text;
+        text = this.parser ? this.parser.parseInline(textOrToken.tokens) : textOrToken.text;
+      } else {
+        depth = level;
+        text = textOrToken;
+        raw = String(textOrToken).replace(/<[^>]+>/g, '');
+      }
+      const id = slugify(raw);
+      return `<h${depth} id="${id}">${text}</h${depth}>\n`;
+    };
+
     // Code: handle both v4-style (code, infostring) and v12 token style.
     renderer.code = function (code, infostring) {
       const lang = (infostring || (code && code.lang) || '').trim().split(/\s+/)[0];
@@ -109,6 +142,10 @@
   }
 
   window.renderMarkdown = function (md, mode) {
+    // Note: output is injected via innerHTML by docs.js / learning-series.js.
+    // The markdown source is fetched from this same repo (docs/ and posts/),
+    // so we treat it as trusted authored content. If user-supplied markdown
+    // ever flows through here, sanitize with DOMPurify before rendering.
     return marked.parse(md, {
       renderer: buildRenderer(mode),
       gfm: true,

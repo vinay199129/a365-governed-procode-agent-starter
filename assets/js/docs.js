@@ -1,13 +1,21 @@
 /**
  * Docs viewer — reads ?doc=<slug>, renders markdown from DOCS_MANIFEST.
+ *
+ * Behavior:
+ *  - Unknown slug → explicit 404 panel (does not silently fall back).
+ *  - location.hash → scroll to matching heading after async render.
+ *  - Per-doc <title> + <meta name="description"> for shareable URLs.
+ *  - "Edit on GitHub" link uses window.A365_REPO_EDIT_BASE from site.js.
  */
 (function () {
   const manifest = window.DOCS_MANIFEST || [];
   const params = new URLSearchParams(window.location.search);
   const requestedSlug = params.get('doc') || 'quickstart';
 
-  // Build the sidebar.
   const sidebar = document.getElementById('sidebar');
+  const target = document.getElementById('doc');
+  const editLink = document.getElementById('edit-link');
+
   const flat = [];
   manifest.forEach((section) => {
     const h = document.createElement('h4');
@@ -27,17 +35,22 @@
     sidebar.appendChild(ul);
   });
 
-  // Find and render the requested doc.
-  const entry = flat.find((i) => i.slug === requestedSlug) || flat[0];
-  const target = document.getElementById('doc');
-  const editLink = document.getElementById('edit-link');
+  const entry = flat.find((i) => i.slug === requestedSlug);
 
   if (!entry) {
-    target.innerHTML = '<p>No documentation found.</p>';
+    document.title = 'Not found · A365 Starter';
+    const safe = requestedSlug.replace(/[<>&"]/g, (c) => ({
+      '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;',
+    }[c]));
+    target.innerHTML =
+      `<h1>Doc not found</h1>` +
+      `<p>No doc with slug <code>${safe}</code>. ` +
+      `Pick one from the sidebar, or jump to <a href="docs.html?doc=quickstart">Quickstart</a>.</p>`;
     return;
   }
 
   document.title = `${entry.title} · A365 Starter`;
+  setMetaDescription(`${entry.title} — A365 Governed Pro-Code Agent Starter docs.`);
 
   fetch(entry.path)
     .then((r) => {
@@ -47,9 +60,33 @@
     .then((md) => {
       target.innerHTML = window.renderMarkdown(window.stripFrontMatter(md), 'docs');
       window.highlightAll();
-      editLink.innerHTML = `<a href="https://github.com/vinay199129/a365-governed-procode-agent-starter/edit/master/${entry.path}" target="_blank" rel="noopener">Edit this page on GitHub →</a>`;
+      const editBase = window.A365_REPO_EDIT_BASE || 'https://github.com/vinay199129/a365-governed-procode-agent-starter/edit/master';
+      editLink.innerHTML = `<a href="${editBase}/${entry.path}" target="_blank" rel="noopener">Edit this page on GitHub →</a>`;
+      scrollToHashAfterRender();
     })
     .catch((err) => {
       target.innerHTML = `<h1>Could not load ${entry.title}</h1><p>${err.message}</p>`;
     });
+
+  function setMetaDescription(text) {
+    let meta = document.querySelector('meta[name="description"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'description');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', text);
+  }
+
+  // Content arrives async (after DOMContentLoaded), so the browser's native
+  // hash scroll has already failed by the time the heading exists.
+  function scrollToHashAfterRender() {
+    if (!window.location.hash) return;
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    // marked emits slug-based IDs on headings; give the DOM one frame to settle.
+    requestAnimationFrame(() => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+    });
+  }
 })();

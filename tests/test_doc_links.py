@@ -29,9 +29,10 @@ LINK_RE = re.compile(r"(?<!!)\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 
 
 def _read_manifest_slugs(manifest_path: Path, key: str) -> set[str]:
-    """Pull `slug:` values out of a JS manifest using a tolerant regex."""
+    """Pull slug values out of a JS manifest. Handles both legacy single-quoted
+    (`slug: 'foo'`) and JSON-style double-quoted (`"slug": "foo"`) formats."""
     text = manifest_path.read_text(encoding="utf-8")
-    return set(re.findall(rf"{key}:\s*'([^']+)'", text))
+    return set(re.findall(rf"['\"]?{key}['\"]?\s*:\s*['\"]([^'\"]+)['\"]", text))
 
 
 def _strip_anchor(href: str) -> str:
@@ -177,3 +178,27 @@ def test_all_posts_links_resolve(posts_slugs, docs_slugs):
             if err:
                 failures.append(f"{md.relative_to(REPO_ROOT)}: [{href}] {err}")
     assert not failures, "Broken posts links:\n  " + "\n  ".join(failures)
+
+
+def test_manifests_match_generator():
+    """Manifests on disk must equal what scripts/build_manifests.py would write.
+    Prevents drift when contributors add markdown without re-running the generator."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "build_manifests", REPO_ROOT / "scripts" / "build_manifests.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    expected_docs = module._build_docs_manifest()
+    expected_posts = module._build_posts_manifest()
+    actual_docs = DOCS_MANIFEST.read_text(encoding="utf-8")
+    actual_posts = POSTS_MANIFEST.read_text(encoding="utf-8")
+
+    assert actual_docs == expected_docs, (
+        "docs-manifest.js is stale. Run: uv run python scripts/build_manifests.py"
+    )
+    assert actual_posts == expected_posts, (
+        "posts-manifest.js is stale. Run: uv run python scripts/build_manifests.py"
+    )
