@@ -35,6 +35,31 @@ For general A365 developer documentation, visit [Microsoft Agent 365 Developer D
 
 ## Quickstart
 
+A365 ships **two onboarding paths** — use whichever fits your situation.
+
+### Path A — AI-guided setup (recommended for first-time / portal users)
+
+Microsoft hosts an **AI-guided onboarding flow** at
+[aka.ms/agent365enable](https://learn.microsoft.com/en-us/microsoft-agent-365/developer/get-started)
+that walks an admin through subscription, region, blueprint, and agent-identity
+provisioning in the M365 Admin Center. It asks two policy questions up front
+— (1) which capability tier you want to enable (Register → Observability → Work IQ
+→ AI teammate) and (2) which auth flow your agents will use (OBO / S2S / Both) —
+and then provisions the Entra objects for you. Once that completes, you can come
+back and just run the agent locally:
+
+```pwsh
+# After AI-guided setup populated env/.env.playground via the portal:
+pwsh -NoProfile -File .vscode/scripts/refresh-bearer-token.ps1
+# Then F5 → "Debug in Microsoft 365 Agents Playground".
+```
+
+### Path B — Scripted setup (recommended for CI / audit-trail / repeat runs)
+
+Use this when you want a fully reproducible, narrated provisioning that is
+diff-able and replayable on a clean tenant — the path this starter exercises
+in its evidence runs.
+
 ```pwsh
 # 1. Provision Azure OpenAI + Entra client app + A365 blueprint + agent identity + tokens.
 #    Narrated step-by-step. Two WAM popups will appear inside `a365 setup all`; accept them.
@@ -46,7 +71,7 @@ pwsh -NoProfile -File .vscode/scripts/refresh-bearer-token.ps1
 # 3. Open the M365 Agents Toolkit panel in VS Code, then press F5 → Debug in Microsoft 365 Agents Playground.
 ```
 
-To wipe the tenant and start over (the round-trip reproducibility test):
+To wipe the tenant and start over (the round-trip reproducibility test for Path B):
 
 ```pwsh
 pwsh -NoProfile -File scripts/teardown-environment.ps1 -SkipConfirmation

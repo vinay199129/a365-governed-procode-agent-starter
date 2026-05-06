@@ -10,24 +10,28 @@ the exact file in this repo where it is applied.
 > **Not a tutorial.** For setup and run instructions, see [README.md](../README.md).
 > For the delivery scope and gap analysis, see [project-scope.md](project-scope.md).
 >
-> **Preview status:** A365 reaches General Availability on **May 1, 2026** — about a week and a half away as of this doc's last refresh (April 2026). Until GA, ingest-side features (OTel ingest, Admin Center Agents view, Defender hunting tables) require enrolment in the [Frontier preview program](https://adoption.microsoft.com/copilot/frontier-program/).
+> **GA status (May 2026 onward).** A365 went **General Availability on May 1, 2026**.
+> Microsoft now describes the platform as four incremental capability tiers — **Register →
+> Observability → Work IQ → AI teammate** — and you adopt only the tiers your scenario
+> needs (see §1.5 below).
 >
-> **Without Frontier — what still works:** the public **A365 SDK** (PyPI) and the **`a365` CLI**
-> are not gated. Provisioning blueprints, agent identities, and agent users lands in
-> **Microsoft Entra**, which already supports the underlying object types — so the entire
-> *governance + identity* path runs end-to-end on a normal tenant. The exporter client
-> path also runs and emits real OTel spans.
+> **What works on any GA-licensed tenant:** the **A365 SDK** (PyPI), the **`a365` CLI**, the
+> **AI-guided setup** at [aka.ms/agent365enable](https://learn.microsoft.com/en-us/microsoft-agent-365/developer/get-started),
+> blueprint + agent-identity provisioning, multi-instance inheritance, the OTel exporter,
+> and Work IQ MCP tools. Everything in tiers Register / Observability / Work IQ.
 >
-> **Without Frontier — what's gated:** the A365 backend ingest endpoint
-> (`agent365.svc.cloud.microsoft/...`) returns **HTTP 403** for non-Frontier tenants, so
-> spans don't actually land. The **M365 Admin Center → Agents view**, **Defender Advanced
-> Hunting** for agent telemetry, and per-instance compliance readouts are similarly gated.
+> **What still requires the [Frontier program](https://adoption.microsoft.com/copilot/frontier-program/) at GA:** the **AI teammate** tier — own UPN with a real mailbox, Teams presence,
+> directory entry, and `@mention` everywhere. This is *not* a pre-GA wait; AI teammate is
+> deliberately Frontier-only at launch. The Admin Center → Agents view, Defender Advanced
+> Hunting on agent telemetry, and per-instance compliance readouts ride on top of the
+> teammate identity, so they too need Frontier today.
 >
-> *In this repo:* see [docs/project-scope.md §15](project-scope.md) row **G9** for the
-> captured 403 + correlation id, and row **G1** for the Admin Center visibility gap. The
-> starter is therefore a *correct client-side reference* for the day Frontier or GA access
-> arrives, plus a *fully working Entra-side governance demo* — see
-> [docs/evidence/multi-instance-inheritance.md](evidence/multi-instance-inheritance.md).
+> *In this repo:* the starter exercises the AI teammate path end-to-end (UPN, mailbox
+> resolution, Teams-shaped activity flow), so it is a **correct client-side reference**
+> ready to light up the moment Frontier — or a future broader rollout — is in place. The
+> Entra-side governance and observability paths run fully on any GA tenant; see
+> [docs/evidence/multi-instance-inheritance.md](evidence/multi-instance-inheritance.md)
+> and [docs/project-scope.md §15](project-scope.md) for the live status of each gap.
 
 ---
 
@@ -161,6 +165,64 @@ on top of both. This is the mental model to hold:
 
 **Reference:** [How is the Agent 365 SDK different?](https://learn.microsoft.com/en-us/microsoft-agent-365/developer/#how-is-the-agent-365-sdk-different)
 
+### 1.5 Pick your tier — the four-tier incremental adoption model
+
+A365 GA is structured as **four capability tiers you adopt incrementally**. You
+don't have to take all of A365 to get value — each tier stands alone, and the
+[AI-guided setup](https://learn.microsoft.com/en-us/microsoft-agent-365/developer/get-started)
+asks which one you want as its first onboarding question.
+
+```
+  Tier 1            Tier 2              Tier 3                Tier 4
+  Register   →    Observability   →    Work IQ        →    AI teammate
+  ---------       --------------       --------------       ---------------
+  Blueprint +     OTel spans into      Governed MCP         Own UPN, mailbox,
+  agent identity  Defender Advanced    tools (Mail,         Teams presence,
+  in Entra        Hunting + Admin      Calendar, SP,        @mention, people
+                  Center               Teams, …)            card
+
+  Tenant cost     Tenant cost          Tenant cost          Tenant cost
+  Any GA tenant   Any GA tenant        Any GA tenant        ⚠ Frontier-only
+```
+
+| Tier | What you get | Smallest scenario it unlocks | This repo |
+|---|---|---|---|
+| **1. Register** | Blueprint + agent-identity object in Entra; admin-visible registration; per-instance accountability | An admin can answer "who owns this agent and what is it allowed to do?" without touching code | [scripts/setup-environment.ps1](../scripts/setup-environment.ps1) Step 1–3 |
+| **2. Observability** | OpenTelemetry exporter + S2S role on the blueprint SP; spans land in Defender Advanced Hunting (Frontier today) | Tenant-wide KQL hunts over agent activity, anomaly detection on tool calls | [agent.py](../agent.py) `_setup_observability()` + [scripts/assign-observability-role.ps1](../scripts/assign-observability-role.ps1) |
+| **3. Work IQ** | Governed MCP servers (Mail, Calendar, SharePoint, OneDrive, Teams, Word, User, Copilot, Dataverse) with admin allow-list per server | Agent reads a user's calendar without holding raw `Calendars.Read` against Graph | [ToolingManifest.json](../ToolingManifest.json) (Mail + Calendar today) |
+| **4. AI teammate** | Own UPN with real mailbox, Teams presence, directory entry, `@mention` anywhere | Users *talk to* the agent the same way they talk to a colleague — in Teams chat, Outlook reply, Word comment | Wired end-to-end; activates on a Frontier tenant |
+
+**How to choose a tier for *your* scenario:**
+
+- *"I just need an admin record of which agents are running."* → Tier 1.
+- *"I need that, plus a way to audit what the agent did."* → Tier 2.
+- *"I need that, plus the agent reading from M365 data through governed paths."* → Tier 3.
+- *"I want the agent to *be* a colleague — chat in Teams, reply to email, get @mentioned."* → Tier 4 (Frontier today).
+
+The tiers are additive: tier 4 includes everything in tiers 1–3. The starter
+exercises all four because the goal is a complete reference; production teams
+often ship at tier 1 or tier 2 first and add the rest as scenarios warrant.
+
+#### Adopting a single tier (e.g. Register-only)
+
+The most common minimum-viable adoption is **Register-only** — you want admin
+visibility of every agent in the tenant without committing to observability
+ingest, governed MCP tools, or a teammate identity yet. To use this repo for
+that path:
+
+1. Run [scripts/setup-environment.ps1](../scripts/setup-environment.ps1) as usual — the blueprint and agent identity in Entra are tier 1.
+2. Skip the observability exporter: leave `OBS_S2S_TOKEN` unset (or set `OBSERVABILITY_DISABLED=true` in [env/.env.playground](../env/.env.playground)) and the `configure(...)` call in [agent.py](../agent.py) `_setup_observability()` will no-op out.
+3. Empty the MCP allow-list: replace [ToolingManifest.json](../ToolingManifest.json) `mcpServers` with `[]` so no governed tools register.
+4. Don't enrol the tenant in Frontier — the AI teammate tier stays inactive.
+
+What you get from a Register-only deployment: every agent has an Entra-backed
+identity, the M365 Admin Center can list it, and the blueprint is a single
+revocation point. What you give up: KQL hunting over agent activity (tier 2),
+Mail/Calendar/SharePoint/Teams without raw Graph permissions (tier 3), and
+`@mention`-anywhere UX (tier 4).
+
+**Reference:** [Agent 365 — Get started](https://learn.microsoft.com/en-us/microsoft-agent-365/developer/get-started)
+
 ---
 
 ## 2. Core Concepts
@@ -291,11 +353,29 @@ A365 supports **two** authentication flows, both powered by Microsoft Entra Agen
 
 | Flow | What it is | Use when |
 |---|---|---|
-| **Agent identity (agentic auth)** | Agent acts as itself, using its own blueprint-derived credentials | Autonomous ops, scheduled tasks, sending from the agent's own mailbox, background work |
+| **Agent identity (agentic auth, S2S)** | Agent acts as itself, using its own blueprint-derived credentials | Autonomous ops, scheduled tasks, sending from the agent's own mailbox, background work |
 | **On-Behalf-Of (OBO)** | Agent exchanges a user's delegated token and acts with the user's permissions | Accessing user-specific data (inbox, calendar, files), actions that require user consent |
 
 OBO provides stronger auditing in reactive flows because every action is tied back to a
 real user principal.
+
+#### Decision matrix — OBO / S2S / Both
+
+The AI-guided onboarding asks **"OBO, S2S, or Both?"** as its second policy
+question. The answer drives which federated credentials the blueprint carries
+and which auth handlers the agent host registers. Use this matrix to pick:
+
+| Mode | Pick when the agent is… | Repo wiring |
+|---|---|---|
+| **OBO only** | Always reacting to a user turn (Teams chat, Outlook reply, Word comment). Every action should attribute to *that user*, not the agent | `USE_AGENTIC_AUTH=false` + `AUTH_HANDLER_NAME=user` in [env/.env.playground](../env/.env.playground); `agent_app.auth.exchange_token(context, scopes=...)` in [host_agent_server.py](../host_agent_server.py) `on_message` |
+| **S2S only** | Always running headless (cron, queue worker, scheduled report) with no human in the loop. Actions attribute to the agent identity itself | `USE_AGENTIC_AUTH=true` + `AUTH_HANDLER_NAME=agentic`; federated credential on the blueprint SP; observability ingest follows this path today |
+| **Both** | Mixed: usually reactive (OBO) but occasionally needs to act on its own (S2S) — e.g. "reply to me, *and* file a follow-up reminder for tomorrow morning" | Both handlers registered; `USE_AGENTIC_AUTH` flips per call site; the host picks based on whether a user activity is in scope |
+
+The **observability ingest** path always uses S2S (the role lives on the
+blueprint SP — see [§3.3](#33-what-does-inheritance-actually-mean-mechanically)),
+so even an "OBO only" agent is implicitly S2S for telemetry. Picking *Both* in
+the AI-guided flow is the safe default if you're unsure; it costs nothing extra
+and keeps room for future scenarios.
 
 **In this repo**
 

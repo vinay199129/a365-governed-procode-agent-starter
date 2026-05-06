@@ -38,20 +38,29 @@ so your code can focus on the agent's job, not the paperwork.
 
 ## What works today vs. what is gated
 
-A365 reaches **General Availability on May 1, 2026**. Until then:
+A365 reached **General Availability on May 1, 2026**. Microsoft frames the
+platform as **four incremental capability tiers** — Register → Observability →
+Work IQ → **AI teammate** — and you adopt only the ones your scenario needs.
+The AI teammate tier (own UPN, real mailbox, Teams presence, `@mention`
+anywhere) is the only one still gated to the
+[Frontier program](https://adoption.microsoft.com/copilot/frontier-program/) at GA.
 
-| Capability | Works on a normal tenant? |
-| --- | --- |
-| `a365` CLI + A365 Python SDK | Yes |
-| Blueprint + Agent Identity provisioning (Entra) | Yes |
-| Multi-instance inheritance | Yes |
-| OTel exporter emits spans | Yes |
-| Spans land in A365 backend | **No** — 403 without [Frontier](https://adoption.microsoft.com/copilot/frontier-program/) |
-| Admin Center → Agents view | **No** — Frontier-gated |
-| Defender Advanced Hunting for agent telemetry | **No** — Frontier-gated |
+| Capability | Tier | Works on a normal GA tenant? |
+| --- | --- | --- |
+| `a365` CLI + A365 Python SDK | — | Yes |
+| AI-guided setup ([aka.ms/agent365enable](https://learn.microsoft.com/en-us/microsoft-agent-365/developer/get-started)) | — | Yes |
+| Blueprint + Agent Identity provisioning (Entra) | Register | Yes |
+| Multi-instance inheritance | Register | Yes |
+| OTel exporter emits spans | Observability | Yes |
+| Work IQ MCP tools (Mail, Calendar, …) | Work IQ | Yes |
+| Spans land in A365 backend | AI teammate | **Frontier-only at GA** |
+| Admin Center → Agents view | AI teammate | **Frontier-only at GA** |
+| Defender Advanced Hunting on agent telemetry | AI teammate | **Frontier-only at GA** |
+| `@mention` agent in Teams / Outlook / Word | AI teammate | **Frontier-only at GA** |
 
-So the starter is a **correct client-side reference** plus a **fully
-working Entra-side governance demo** today.
+So the starter is a **correct client-side reference** for the full AI teammate
+path, and a **fully working Entra-side governance demo** for everyone — Frontier
+or not.
 
 ## Try it yourself
 

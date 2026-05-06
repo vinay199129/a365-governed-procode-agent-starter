@@ -19,7 +19,25 @@ You need:
 > agent identity) plus an Azure OpenAI deployment in your subscription.
 > Use a non-production tenant the first time.
 
-## Three commands
+## Two onboarding paths
+
+A365 supports two ways to provision the platform side. Pick the one that fits.
+
+### Path A — AI-guided setup (portal)
+
+Visit [aka.ms/agent365enable](https://learn.microsoft.com/en-us/microsoft-agent-365/developer/get-started)
+for Microsoft's hosted AI-guided onboarding. It walks an admin through
+subscription, region, blueprint, and agent-identity creation, asking two
+policy questions up front: which **capability tier** you want
+(Register → Observability → Work IQ → AI teammate — see
+[learning-guide §1.5](learning-guide.md)) and which **auth flow** your agents
+will use (OBO / S2S / Both — see [learning-guide §2.5](learning-guide.md)).
+When it finishes, jump straight to the [Verify](#verify) section below.
+
+### Path B — Scripted setup (three commands)
+
+Use this for CI, audit-trail, or repeat runs on a clean tenant. This is the
+path this starter's evidence captures exercise.
 
 ```pwsh
 # 1. Provision Azure OpenAI + Entra client app + A365 blueprint + agent identity + tokens.
@@ -39,8 +57,9 @@ In the Playground browser tab, send `hello`. You should see:
 
 - A response from the agent
 - `Activity received` logs in the integrated terminal with `from_property` fields
-- An OpenTelemetry export attempt (HTTP 200 with Frontier access; HTTP 403
-  without — see [project scope](project-scope.md) row G9 for why)
+- An OpenTelemetry export attempt (HTTP 200 on a Frontier-enrolled tenant;
+  HTTP 403 otherwise — see [project scope](project-scope.md) row G9 for why
+  AI-teammate-tier ingest is still Frontier-gated at GA)
 
 ## Reset
 

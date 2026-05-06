@@ -21,7 +21,7 @@ If something failed, run through this list before re-running setup:
 | Symptom | Likely cause |
 | --- | --- |
 | `401 Unauthorized` on first Playground turn | Bearer token expired — refresh it |
-| OTel export shows `403 Forbidden` | Tenant not enrolled in Frontier — expected pre-GA |
+| OTel export shows `403 Forbidden` | Tenant not enrolled in [Frontier](https://adoption.microsoft.com/copilot/frontier-program/) — AI-teammate-tier ingest is Frontier-gated at GA |
 | `setup-environment.ps1` hangs at WAM popup | Popup is behind another window — alt-tab |
 | Agent identity not visible in Entra | Setup didn't reach step 5; re-run setup |
 | Playground shows blank response | Check terminal for `Activity received`; if missing, the host didn't start — check the F5 launch config |

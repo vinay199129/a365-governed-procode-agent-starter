@@ -10,10 +10,13 @@
 
 If you only read one section, read this one.
 
+- **GA status:** A365 went **General Availability on May 1, 2026**. The repo is post-GA;
+  the only capability still gated by [Frontier](https://adoption.microsoft.com/copilot/frontier-program/) is the **AI teammate** tier (own UPN /
+  mailbox / Teams presence). Register, Observability, and Work IQ tiers all run on any
+  GA-licensed tenant.
 - **What works end-to-end:** building the agent, provisioning Entra identity + Security Blueprint, multi-instance inheritance, OpenTelemetry exporter wiring, and a fully reproducible teardown → setup script round-trip. Local Playground is the verified runtime surface.
-- **What's wired but not yet proven on a live tenant:** Teams 1:1 chat, App Service hosting, Admin Portal screenshots, compliance-tab capture, and OTel ingestion (the dev tenant returns HTTP 403 — almost certainly a Frontier/license gating issue, not a code defect).
+- **What's wired but Frontier-gated at runtime:** Teams 1:1 chat (G2), Admin Portal Agents view (G1), compliance-tab capture (G6), and OTel ingestion (G9) all ride on the AI teammate identity, so they need a Frontier-enrolled tenant — *not* a pre-GA wait.
 - **Round-trip reproducibility:** `pwsh -File scripts/teardown-environment.ps1 -SkipConfirmation; pwsh -File scripts/setup-environment.ps1` will rebuild the entire environment with narrated step logs. The only manual touch-points are two WAM popups inside `a365 setup all` and an optional device-code login for the bearer token. Latest run: [docs/evidence/round-trip.md](evidence/round-trip.md).
-- **What's blocked, honestly:** OTel ingestion (G9) needs a Frontier-enrolled tenant after **May 1, 2026**; Teams chat (G2) needs Teams installation to light up first.
 - **How to read the rest:** §1-§9 is the framing (what this is, what success looks like, what's deliberately not in scope). §15 is the live status board — start there if you just want to know what's done vs. pending.
 
 ---
@@ -250,7 +253,7 @@ All remaining gaps are **live-tenant execution + evidence capture** — scripts 
 | G6 | S7 — No compliance flags | **Not captured** | No screenshot/CLI output showing compliance status per instance | Capture `a365 compliance` / Admin Portal compliance tab per instance |
 | G7 | S5 — Inheritance proof (policy/permissions) | **Done** | Graph-side verification shows byte-identical delegated scope sets on both instance SPs and a single `OtelWrite` role on the blueprint SP; see [docs/evidence/multi-instance-inheritance.md](evidence/multi-instance-inheritance.md) | — |
 | G8 | S2 — Tenant-owned UPN + mailbox | **Code fix applied** | [scripts/setup-environment.ps1](../scripts/setup-environment.ps1) now resolves the default verified tenant domain via Graph | Re-run setup, then send a test mail and capture `az ad user show` |
-| G9 | S8 — OTel traces from both instances | **Exporter validated, backend returns 403** | Exporter is live and actively POSTing to `https://agent365.svc.cloud.microsoft/maven/agent365/agents/{agentId}/traces` with a resolved `OBS_S2S_TOKEN` and spans partitioned by tenant+agent id. Dev tenant rejects ingestion with HTTP 403 (correlation id `2b5c35d3-ea84-4485-ba0b-9606c91010b7`). Investigated `USE_AGENTIC_AUTH=true` as a cheaper alternative — ruled out because the agentic token-exchange path requires a real Teams turn carrying an OBO-eligible delegated user token; Playground bearer tokens are scoped to Work IQ Tools and cannot be re-exchanged for an agentic-identity token. Net cause is almost certainly tenant-side Frontier gating, not client-side auth shape. | Retest on a Frontier-enrolled or GA-licensed tenant (after **May 1, 2026**). The `USE_AGENTIC_AUTH=true` retest still applies but only after Teams installation lights up (G2). |
+| G9 | S8 — OTel traces from both instances | **Exporter validated, backend returns 403 on non-Frontier tenants** | Exporter is live and actively POSTing to `https://agent365.svc.cloud.microsoft/maven/agent365/agents/{agentId}/traces` with a resolved `OBS_S2S_TOKEN` and spans partitioned by tenant+agent id. Dev tenant rejects ingestion with HTTP 403 (correlation id `2b5c35d3-ea84-4485-ba0b-9606c91010b7`). Investigated `USE_AGENTIC_AUTH=true` as a cheaper alternative — ruled out because the agentic token-exchange path requires a real Teams turn carrying an OBO-eligible delegated user token; Playground bearer tokens are scoped to Work IQ Tools and cannot be re-exchanged for an agentic-identity token. Confirmed post-GA: AI-teammate-tier observability ingest remains Frontier-gated at General Availability — not a pre-GA wait. | Retest on a [Frontier-enrolled](https://adoption.microsoft.com/copilot/frontier-program/) tenant. The `USE_AGENTIC_AUTH=true` retest still applies but only after Teams installation lights up (G2). |
 | G10 | Reproducible teardown → setup round-trip | **Done** | Hardened teardown (sync RG delete + Cognitive Services purge) and setup (Steps 7-10 closed: agent identity, OtelWrite roles, OBS_S2S_TOKEN, exporter flag) executed end-to-end with full Write-Stage narration. See [docs/evidence/round-trip.md](evidence/round-trip.md) for identifiers, step outcomes, and remaining manual touch-points (two WAM popups in `a365 setup all`; Step 11 device-code optional). | — |
 
 ### 15.3 Suggested Closure Order
@@ -261,7 +264,7 @@ What's left to do, in the order that makes the most sense (cheapest first, exter
 2. **G1 + G6** — capture Admin Portal + compliance-tab screenshots. (~10 minutes once the tenant is in front of you.)
 3. **G4** — apply the blueprint policy from [blueprint-policy.md](blueprint-policy.md) against the live tenant and confirm it sticks.
 4. **G3 + G2** — deploy to App Service, install in Teams, record a working 1:1 chat. This unblocks the agentic-auth retest path inside G9.
-5. **G9** — once on a Frontier/GA-licensed tenant (after **May 1, 2026**), confirm OTel traces ingest cleanly from both instances; archive the trace IDs.
+5. **G9** — once on a [Frontier-enrolled](https://adoption.microsoft.com/copilot/frontier-program/) tenant, confirm OTel traces ingest cleanly from both instances; archive the trace IDs. (AI-teammate-tier ingest is Frontier-gated at GA, so a vanilla GA tenant will still see HTTP 403 here.)
 
 **Already complete:** G5 (two instances) and G7 (inheritance proof) — see [docs/evidence/multi-instance-inheritance.md](evidence/multi-instance-inheritance.md). G10 (round-trip) — see [docs/evidence/round-trip.md](evidence/round-trip.md).
 
