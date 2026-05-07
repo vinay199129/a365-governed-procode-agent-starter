@@ -29,9 +29,16 @@
 .PARAMETER OpenAIModel
     Azure OpenAI model to deploy. Default: gpt-4o-mini
 
+.PARAMETER SkipPlaygroundConfig
+    Skip Step 5 (writing env/.env.playground and env/.env.playground.user).
+    Use this in CI/CD or any prod-shape provisioning where the Microsoft 365
+    Agents Playground host is not part of the workflow. The Azure / Entra /
+    A365-blueprint stages still run end-to-end.
+
 .EXAMPLE
     .\scripts\setup-environment.ps1
     .\scripts\setup-environment.ps1 -AgentName "myagent" -Location "westus"
+    .\scripts\setup-environment.ps1 -SkipPlaygroundConfig   # prod-shape, no .env.playground writes
 #>
 
 param(
@@ -39,7 +46,8 @@ param(
     [string]$Location = "eastus",
     [string]$SkuTier = "F1",
     [string]$OpenAIModel = "gpt-4o-mini",
-    [string]$ResourceGroup = ""
+    [string]$ResourceGroup = "",
+    [switch]$SkipPlaygroundConfig
 )
 
 $ErrorActionPreference = "Stop"
@@ -327,7 +335,19 @@ Write-Host "  Installing dependencies..."
 uv pip install -e ".[dev]" 2>&1 | Out-Null
 Write-Host "  [OK] Python environment ready" -ForegroundColor Green
 
-# --- Step 5: Generate playground env files ---
+# --- Step 5: Generate playground env files (local dev convenience; skipped in CI/prod) ---
+if ($SkipPlaygroundConfig) {
+    Write-Host ""
+    Write-Host "============================================================" -ForegroundColor DarkGray
+    Write-Host " STEP 5 : Playground env files - SKIPPED (-SkipPlaygroundConfig)" -ForegroundColor DarkGray
+    Write-Host "============================================================" -ForegroundColor DarkGray
+    Write-Host "  env/.env.playground.user is NOT being written." -ForegroundColor DarkGray
+    Write-Host "  Provide secrets via your CI/CD secret store or run" -ForegroundColor DarkGray
+    Write-Host "  setup-environment.ps1 again without -SkipPlaygroundConfig" -ForegroundColor DarkGray
+    Write-Host "  to enable local F5 debugging from the same Azure footprint." -ForegroundColor DarkGray
+    Write-Host ""
+} else {
+
 Write-Host ""
 Write-Stage 5 "Playground env files" `
     -What "Write env/.env.playground (CLIENT_APP_ID, exporter flags) and env/.env.playground.user (Azure OpenAI key, secret placeholders)." `
@@ -394,6 +414,8 @@ SECRET_OBS_S2S_TOKEN=
 }
 Set-Content -Path $envPlaygroundUser -Value $userContent -Encoding UTF8
 Write-Host "  [OK] env/.env.playground.user populated" -ForegroundColor Green
+
+}  # end if (-not $SkipPlaygroundConfig)
 
 # --- Step 6: Generate a365.config.json + run a365 setup ---
 Write-Host ""

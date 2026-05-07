@@ -59,3 +59,17 @@ Describe "setup-environment.ps1 GA-channel pinning" {
         $script:Content | Should -Not -Match 'dotnet tool install[^\n]*--prerelease'
     }
 }
+
+Describe "setup-environment.ps1 prod/local-dev separation" {
+    It "exposes -SkipPlaygroundConfig switch for CI/prod-shape runs" {
+        $script:Content | Should -Match '\[switch\]\$SkipPlaygroundConfig'
+    }
+
+    It "gates Step 5 (.env.playground writes) behind -SkipPlaygroundConfig" {
+        # The .env.playground.user write must live inside an else-branch tied
+        # to $SkipPlaygroundConfig so prod runs cannot accidentally clobber
+        # secrets sourced from the CI secret store.
+        $script:Content | Should -Match 'if \(\$SkipPlaygroundConfig\)'
+        $script:Content | Should -Match 'env/\.env\.playground\.user populated'
+    }
+}
