@@ -4,7 +4,7 @@ section: Architecture Decisions
 # ADR 0001 — Polyglot Pester + pytest test strategy
 
 - **Status:** Accepted (May 7, 2026)
-- **Context:** [Architecture review](../../.copilot-tracking/research/subagents/2026-05-07/) flagged the dual test runtime as a maintenance risk.
+- **Context:** Architecture review (May 7, 2026) flagged the dual test runtime as a maintenance risk.
 
 ## Decision
 

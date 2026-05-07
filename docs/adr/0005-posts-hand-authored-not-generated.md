@@ -4,7 +4,7 @@ section: Architecture Decisions
 # ADR 0005 — Posts are hand-authored narratives, not generated from docs
 
 - **Status:** Accepted (May 7, 2026)
-- **Context:** [Architecture review](../../.copilot-tracking/research/subagents/2026-05-07/) flagged the dual content tree (`docs/` + `posts/`) as a maintenance risk and asked whether `posts/` should be generated.
+- **Context:** Architecture review (May 7, 2026) flagged the dual content tree (`docs/` + `posts/`) as a maintenance risk and asked whether `posts/` should be generated.
 
 ## Decision
 

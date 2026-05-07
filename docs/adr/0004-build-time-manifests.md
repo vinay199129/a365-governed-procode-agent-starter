@@ -4,7 +4,7 @@ section: Architecture Decisions
 # ADR 0004 — Sidebar manifests are build-time generated and committed
 
 - **Status:** Accepted (May 7, 2026)
-- **Context:** [Architecture review](../../.copilot-tracking/research/subagents/2026-05-07/) flagged the committed `*-manifest.js` files as a "generated artefact in git" smell.
+- **Context:** Architecture review (May 7, 2026) flagged the committed `*-manifest.js` files as a "generated artefact in git" smell.
 
 ## Decision
 

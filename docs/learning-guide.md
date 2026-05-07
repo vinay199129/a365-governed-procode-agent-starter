@@ -446,7 +446,7 @@ app registration. It carries:
 
 | What | Where it shows up in this repo |
 |---|---|
-| Required Graph delegated scopes (`User.Read.All`, `Mail.Send`, etc.) | [a365.config.json](../a365.config.json) — consumed by `a365 setup all` |
+| Required Graph delegated scopes (`User.Read.All`, `Mail.Send`, etc.) | `a365.config.json` (generated locally) — consumed by `a365 setup all` |
 | Required app roles on Microsoft resources (e.g. `Agent365.Observability.OtelWrite`) | [scripts/assign-observability-role.ps1](../scripts/assign-observability-role.ps1) |
 | Allowed MCP tooling | [ToolingManifest.json](../ToolingManifest.json) — Mail + Calendar |
 | Auth handler configuration (federated credential type, audience) | `.env` → `AGENTAPPLICATION__USERAUTHORIZATION__HANDLERS__AGENTIC__SETTINGS__TYPE=AgenticUserAuthorization` |

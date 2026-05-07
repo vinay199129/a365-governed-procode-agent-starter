@@ -4,7 +4,7 @@ section: Architecture Decisions
 # ADR 0003 — Provisioning ownership: PowerShell script, not azd / Bicep
 
 - **Status:** Accepted (May 7, 2026)
-- **Context:** [Architecture review](../../.copilot-tracking/research/subagents/2026-05-07/) flagged that `setup-environment.ps1` does both Azure resource creation and Entra app registration imperatively, instead of via `azd up` + Bicep.
+- **Context:** Architecture review (May 7, 2026) flagged that `setup-environment.ps1` does both Azure resource creation and Entra app registration imperatively, instead of via `azd up` + Bicep.
 
 ## Decision
 

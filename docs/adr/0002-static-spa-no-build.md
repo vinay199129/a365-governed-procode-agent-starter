@@ -4,7 +4,7 @@ section: Architecture Decisions
 # ADR 0002 — Static SPA, no build pipeline
 
 - **Status:** Accepted (May 7, 2026)
-- **Context:** [Architecture review](../../.copilot-tracking/research/subagents/2026-05-07/) flagged the no-build SPA as a potential long-term liability.
+- **Context:** Architecture review (May 7, 2026) flagged the no-build SPA as a potential long-term liability.
 
 ## Decision
 
