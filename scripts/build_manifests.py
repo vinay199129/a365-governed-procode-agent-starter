@@ -38,6 +38,7 @@ DOCS_SECTION_ORDER: list[str] = [
     "Getting Started",
     "Concepts",
     "Architecture",
+    "Architecture Decisions",
     "Setup & Operations",
     "Governance",
     "Evidence",
