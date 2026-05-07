@@ -34,13 +34,43 @@
    *   ../README.md     -> GitHub blob URL
    *   ../agent.py      -> GitHub blob URL
    */
-  function rewriteHref(href, mode) {
+  /**
+   * Rewrite a relative href found inside a rendered markdown file.
+   *
+   * `sourceSlug` is the slug of the markdown file currently being rendered
+   * (e.g. 'evidence/round-trip' for docs/evidence/round-trip.md). It is used
+   * to anchor non-.md relative paths so an image like ![](diagram.png) inside
+   * a sub-folder doc resolves to the correct on-disk location instead of the
+   * docs/ root.
+   *
+   * Rules (docs mode — file lives under docs/):
+   *   foo.md           -> docs.html?doc=foo
+   *   evidence/foo.md  -> docs.html?doc=evidence/foo
+   *   ../README.md     -> GitHub blob URL (out of docs/)
+   *   ../agent.py      -> GitHub blob URL
+   *   #anchor          -> unchanged (in-page)
+   *   https://...      -> unchanged
+   *
+   * Rules (posts mode — file lives under posts/):
+   *   foo.md           -> learning-series.html?post=foo
+   *   ../docs/foo.md   -> docs.html?doc=foo
+   *   ../README.md     -> GitHub blob URL
+   *   ../agent.py      -> GitHub blob URL
+   */
+  function rewriteHref(href, mode, sourceSlug) {
     if (!href) return href;
     if (/^(https?:|mailto:|#)/i.test(href)) return href;
 
     const hashIndex = href.indexOf('#');
     const pathOnly = hashIndex === -1 ? href : href.slice(0, hashIndex);
     const hash = hashIndex === -1 ? '' : href.slice(hashIndex);
+
+    // Resolve relative non-.md links against the source file's directory so
+    // images and other assets inside sub-folder docs don't 404 against the
+    // docs/ root.
+    const sourceDir = sourceSlug && sourceSlug.includes('/')
+      ? sourceSlug.slice(0, sourceSlug.lastIndexOf('/') + 1)
+      : '';
 
     if (mode === 'docs') {
       if (pathOnly.startsWith('../')) {
@@ -50,7 +80,7 @@
         const slug = pathOnly.replace(/\.md$/, '');
         return `docs.html?doc=${encodeURIComponent(slug)}${hash}`;
       }
-      return `docs/${pathOnly}${hash}`;
+      return `docs/${sourceDir}${pathOnly}${hash}`;
     }
 
     if (mode === 'posts') {
@@ -65,7 +95,7 @@
         const slug = pathOnly.replace(/\.md$/, '');
         return `learning-series.html?post=${encodeURIComponent(slug)}${hash}`;
       }
-      return `posts/${pathOnly}${hash}`;
+      return `posts/${sourceDir}${pathOnly}${hash}`;
     }
 
     return href;
@@ -74,17 +104,20 @@
   // Exposed for unit testing.
   window.__rewriteHref = rewriteHref;
 
-  function buildRenderer(mode) {
+  function buildRenderer(mode, sourceSlug) {
     const renderer = new marked.Renderer();
 
     // Heading: emit an `id` slug so location.hash anchors work.
     // Marked v12 dropped built-in header IDs; we add a minimal slugger here.
     const seenSlugs = new Map();
     function slugify(text) {
-      const base = String(text).toLowerCase()
+      let base = String(text).toLowerCase()
         .replace(/[^\w\s-]/g, '')
         .trim()
         .replace(/\s+/g, '-');
+      // Headings made of symbols only (e.g. "##") slugify to '' which produces
+      // invalid <h2 id="">; fall back so anchors stay clickable.
+      if (!base) base = 'section';
       const count = seenSlugs.get(base) || 0;
       seenSlugs.set(base, count + 1);
       return count === 0 ? base : `${base}-${count}`;
@@ -131,23 +164,23 @@
         linkText = text;
       }
 
-      const rewritten = rewriteHref(href, mode);
+      const rewritten = rewriteHref(href, mode, sourceSlug);
       const titleAttr = linkTitle ? ` title="${linkTitle}"` : '';
       const isExternal = /^https?:/i.test(rewritten);
-      const extAttrs = isExternal ? ' target="_blank" rel="noopener"' : '';
+      const extAttrs = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
       return `<a href="${rewritten}"${titleAttr}${extAttrs}>${linkText}</a>`;
     };
 
     return renderer;
   }
 
-  window.renderMarkdown = function (md, mode) {
+  window.renderMarkdown = function (md, mode, sourceSlug) {
     // Note: output is injected via innerHTML by docs.js / learning-series.js.
     // The markdown source is fetched from this same repo (docs/ and posts/),
     // so we treat it as trusted authored content. If user-supplied markdown
     // ever flows through here, sanitize with DOMPurify before rendering.
     return marked.parse(md, {
-      renderer: buildRenderer(mode),
+      renderer: buildRenderer(mode, sourceSlug),
       gfm: true,
       breaks: false,
     });
@@ -158,7 +191,10 @@
       const end = md.indexOf('\n---', 3);
       if (end !== -1) {
         const after = md.indexOf('\n', end + 4);
-        return md.slice(after + 1);
+        // No trailing newline after closing fence — the front-matter IS the
+        // entire file. Return empty body instead of slicing from -1+1=0,
+        // which would echo the front-matter back as the rendered content.
+        return after === -1 ? '' : md.slice(after + 1);
       }
     }
     return md;

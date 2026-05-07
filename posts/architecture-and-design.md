@@ -21,7 +21,7 @@ swap pieces without rewriting the rest:
 - **MCP servers** own tool implementations (Mail, Calendar);
 - **A365** owns identity and governance — *outside* the process.
 
-Understanding those boundaries makes the [code walkthrough](learning-series.html?post=code-walkthrough)
+Understanding those boundaries makes the [code walkthrough](code-walkthrough.md)
 much easier to follow.
 
 ## The four moving parts
@@ -60,6 +60,6 @@ code agent.py
 
 ## Go deeper
 
-- Canonical doc: [Architecture: Design](docs.html?doc=design)
+- Canonical doc: [Architecture: Design](../docs/design.md)
 - Microsoft 365 Agents SDK: <https://aka.ms/teams-toolkit>
 - OpenAI Agents SDK for Python: <https://github.com/openai/openai-agents-python>

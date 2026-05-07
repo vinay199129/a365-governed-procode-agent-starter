@@ -35,7 +35,7 @@ All scopes use `consentType=AllPrincipals` so users see no consent prompt.
 ## Key concepts in five bullets
 
 - **One source of truth** — the blueprint SP is the only place scopes are declared.
-- **Verified empirically** — see the [inheritance evidence post](learning-series.html?post=evidence-multi-instance-inheritance).
+- **Verified empirically** — see the [inheritance evidence post](evidence-multi-instance-inheritance.md).
 - **Scope changes are blueprint-level** — instances inherit on next provision.
 - **Tenant UPN, not `onmicrosoft.com`** — agents look like real users.
 - **MCP scopes are first-class** — they gate the tools the agent can call.
@@ -55,5 +55,5 @@ pwsh -NoProfile -File scripts/provision-second-instance.ps1
 
 ## Go deeper
 
-- Canonical doc: [Governance: Blueprint policy](docs.html?doc=blueprint-policy)
-- [Multi-instance evidence](docs.html?doc=evidence/multi-instance-inheritance)
+- Canonical doc: [Governance: Blueprint policy](../docs/blueprint-policy.md)
+- [Multi-instance evidence](../docs/evidence/multi-instance-inheritance.md)

@@ -238,7 +238,7 @@ The `scripts/setup-environment.ps1` script automates this entire provisioning.
 
 ### Bot Framework 404 When Sending Raw HTTP Messages
 
-**Symptom:** Sending a POST to `http://localhost:3979/api/messages` with a Bot Framework Activity JSON causes `ClientResponseError: 404 Not Found` at `/v3/conversations/{id}/activities`.
+**Symptom:** Sending a POST to `http://localhost:3978/api/messages` with a Bot Framework Activity JSON causes `ClientResponseError: 404 Not Found` at `/v3/conversations/{id}/activities`.
 
 **Root cause:** This is not a bug. The Bot Framework protocol requires a channel connector at the `serviceUrl` to receive agent replies. When you send a raw HTTP request, there's no connector listening, so the agent processes the message but fails when trying to deliver its response back.
 
@@ -249,7 +249,7 @@ The `scripts/setup-environment.ps1` script automates this entire provisioning.
 | Method | How |
 |---|---|
 | **Agents Playground** (recommended) | Install M365 Agents Toolkit extension, press F5 in VS Code |
-| **Health endpoint** | `GET http://localhost:3979/api/health` — verifies agent is running and initialized |
+| **Health endpoint** | `GET http://localhost:3978/api/health` — verifies agent is running and initialized |
 | **Dev Tunnels + Teams** | Expose local port via Dev Tunnels, set as messaging endpoint, test in Teams |
 
 ## Round-Trip / Re-Provisioning Issues
@@ -325,7 +325,7 @@ Empty result → re-run `setup-environment.ps1` (idempotent for this step) or ru
 
 **Symptom:** Exporter logs show `POST https://agent365.svc.cloud.microsoft/maven/agent365/agents/<agentId>/traces 403`. Token mints fine; spans build fine; ingest rejects.
 
-**Root cause:** Tenant-side gating. The OBS ingest endpoint requires the tenant to be enrolled in the **Frontier** preview program (or to have A365 GA, which lands May 1, 2026). The dev tenant in this repo is neither.
+**Root cause:** Tenant-side gating. The OBS ingest endpoint requires the tenant to be enrolled in the **Frontier** preview program or licensed for A365 GA (GA shipped May 1, 2026). The dev tenant in this repo is neither.
 
 **Resolution:** Not a code defect. Documented as gap **G9** in [docs/project-scope.md](docs/project-scope.md). Retest on a Frontier-enrolled or GA-licensed tenant. The exporter wiring itself has been validated end-to-end (token resolver, baggage stamping, OTLP POST shape).
 
@@ -338,10 +338,6 @@ Empty result → re-run `setup-environment.ps1` (idempotent for this step) or ru
 **Resolution:** Add `AUTH_HANDLER_NAME=AGENTIC` to `env/.env.playground` and re-run, **and** ensure the matching `AGENTAPPLICATION__USERAUTHORIZATION__HANDLERS__AGENTIC__*` block is present (today only `.env.template` has it; the Playground env files do not). This is currently a latent defect because we only run with `USE_AGENTIC_AUTH=false` (gap G9 in [docs/project-scope.md](docs/project-scope.md)). It will surface as soon as G2 (Teams installation) unblocks the agentic-auth retest path.
 
 The fix also belongs upstream — either the host code should derive the handler name from the framework registry instead of an env var, or `setup-environment.ps1` should write `AUTH_HANDLER_NAME` and the matching `AGENTAPPLICATION__` block when `USE_AGENTIC_AUTH=true`.
-
-**Root cause:** Tenant-side gating. The OBS ingest endpoint requires the tenant to be enrolled in the **Frontier** preview program (or to have A365 GA, which lands May 1, 2026). The dev tenant in this repo is neither.
-
-**Resolution:** Not a code defect. Documented as gap **G9** in [docs/project-scope.md](docs/project-scope.md). Retest on a Frontier-enrolled or GA-licensed tenant. The exporter wiring itself has been validated end-to-end (token resolver, baggage stamping, OTLP POST shape).
 
 ## Key Learnings Summary
 

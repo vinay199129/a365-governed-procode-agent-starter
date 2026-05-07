@@ -58,14 +58,19 @@
       return r.text();
     })
     .then((md) => {
-      target.innerHTML = window.renderMarkdown(window.stripFrontMatter(md), 'docs');
+      target.innerHTML = window.renderMarkdown(window.stripFrontMatter(md), 'docs', entry.slug);
       window.highlightAll();
-      const editBase = window.A365_REPO_EDIT_BASE || 'https://github.com/vinay199129/a365-governed-procode-agent-starter/edit/master';
-      editLink.innerHTML = `<a href="${editBase}/${entry.path}" target="_blank" rel="noopener">Edit this page on GitHub →</a>`;
+      const editBase = window.A365_REPO_EDIT_BASE;
+      editLink.innerHTML = `<a href="${editBase}/${entry.path}" target="_blank" rel="noopener noreferrer">Edit this page on GitHub →</a>`;
       scrollToHashAfterRender();
     })
     .catch((err) => {
-      target.innerHTML = `<h1>Could not load ${entry.title}</h1><p>${err.message}</p>`;
+      // Build the error panel via DOM APIs so err.message can never inject HTML.
+      const h1 = document.createElement('h1');
+      h1.textContent = `Could not load ${entry.title}`;
+      const p = document.createElement('p');
+      p.textContent = err.message;
+      target.replaceChildren(h1, p);
     });
 
   function setMetaDescription(text) {

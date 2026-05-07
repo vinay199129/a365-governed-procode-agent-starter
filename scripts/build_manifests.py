@@ -12,9 +12,10 @@ this script would produce, so CI will catch drift if a contributor edits
 docs but skips the regeneration step.
 
 Conventions:
-- docs/ entries are grouped by section using the leading folder name OR
-  a `section:` value in the markdown front-matter. Files at the docs/
-  root are placed in sections by an explicit mapping below.
+- docs/ entries are discovered by walking docs/ recursively. Sections are
+  picked from each doc's `section:` front-matter; absent that, the leading
+  sub-folder name (e.g. evidence/) is used; for root-level docs the
+  DEFAULT_SECTION map applies; anything else lands in 'Other'.
 - posts/ entries are sorted by `date:` from front-matter (descending).
 - Slugs for docs preserve sub-paths (`evidence/round-trip`); for posts
   the slug is just the file stem.
@@ -32,15 +33,32 @@ POSTS_DIR = REPO_ROOT / "posts"
 DOCS_MANIFEST = REPO_ROOT / "assets" / "js" / "docs-manifest.js"
 POSTS_MANIFEST = REPO_ROOT / "assets" / "js" / "posts-manifest.js"
 
-# Explicit section assignment for files at docs/ root, plus ordering.
-DOCS_SECTIONS: list[tuple[str, list[str]]] = [
-    ("Getting Started", ["quickstart", "troubleshooting"]),
-    ("Concepts", ["learning-guide", "project-scope"]),
-    ("Architecture", ["design", "code-walkthrough"]),
-    ("Setup & Operations", ["setup-walkthrough", "testing"]),
-    ("Governance", ["blueprint-policy"]),
-    ("Evidence", []),  # populated from docs/evidence/*.md
+# Section ordering. Sections themselves are populated by walking docs/.
+DOCS_SECTION_ORDER: list[str] = [
+    "Getting Started",
+    "Concepts",
+    "Architecture",
+    "Setup & Operations",
+    "Governance",
+    "Evidence",
+    "Other",
 ]
+
+# Default section per slug (file stem) used when a doc has no `section:`
+# front-matter. Drop a doc into docs/ AND want it sectioned a particular
+# way? Either add `section: <name>` to its front-matter (preferred) or
+# extend this map.
+DEFAULT_SECTION: dict[str, str] = {
+    "quickstart": "Getting Started",
+    "troubleshooting": "Getting Started",
+    "learning-guide": "Concepts",
+    "project-scope": "Concepts",
+    "design": "Architecture",
+    "code-walkthrough": "Architecture",
+    "setup-walkthrough": "Setup & Operations",
+    "testing": "Setup & Operations",
+    "blueprint-policy": "Governance",
+}
 
 
 def _read_front_matter(md: Path) -> dict[str, str]:
@@ -70,35 +88,53 @@ def _title_for(md: Path) -> str:
     return md.stem.replace("-", " ").title()
 
 
+def _section_for(md: Path, slug: str) -> str:
+    """Pick the sidebar section for a doc.
+
+    Order:
+      1. `section:` value in the markdown front-matter (authoritative)
+      2. Sub-folder name capitalized (e.g. docs/evidence/X.md -> 'Evidence')
+      3. DEFAULT_SECTION mapping for known root-level slugs
+      4. 'Other' as the catch-all so new docs are never silently dropped
+    """
+    fm = _read_front_matter(md)
+    if "section" in fm and fm["section"]:
+        return fm["section"]
+    parts = slug.split("/")
+    if len(parts) > 1:
+        return parts[0].replace("-", " ").title()
+    return DEFAULT_SECTION.get(slug, "Other")
+
+
 def _build_docs_manifest() -> str:
+    grouped: dict[str, list[dict]] = {name: [] for name in DOCS_SECTION_ORDER}
+    for md in sorted(DOCS_DIR.rglob("*.md")):
+        rel = md.relative_to(DOCS_DIR).with_suffix("")
+        slug = str(rel).replace("\\", "/")
+        section = _section_for(md, slug)
+        grouped.setdefault(section, []).append(
+            {
+                "slug": slug,
+                "title": _title_for(md),
+                "path": f"docs/{md.relative_to(DOCS_DIR).as_posix()}",
+            }
+        )
+
+    # Emit known sections in order, then any extras (e.g. user-defined section
+    # names from front-matter) alphabetically so output is deterministic.
     sections: list[dict] = []
-    for section_name, slugs in DOCS_SECTIONS:
-        items = []
-        if section_name == "Evidence":
-            evidence_dir = DOCS_DIR / "evidence"
-            if evidence_dir.exists():
-                for md in sorted(evidence_dir.glob("*.md")):
-                    slug = f"evidence/{md.stem}"
-                    items.append(
-                        {
-                            "slug": slug,
-                            "title": _title_for(md),
-                            "path": f"docs/evidence/{md.name}",
-                        }
-                    )
-        else:
-            for slug in slugs:
-                md = DOCS_DIR / f"{slug}.md"
-                if md.exists():
-                    items.append(
-                        {
-                            "slug": slug,
-                            "title": _title_for(md),
-                            "path": f"docs/{md.name}",
-                        }
-                    )
+    seen: set[str] = set()
+    for name in DOCS_SECTION_ORDER:
+        items = grouped.get(name, [])
         if items:
-            sections.append({"section": section_name, "items": items})
+            sections.append({"section": name, "items": items})
+        seen.add(name)
+    for name in sorted(grouped):
+        if name in seen:
+            continue
+        items = grouped[name]
+        if items:
+            sections.append({"section": name, "items": items})
 
     body = json.dumps(sections, indent=2, ensure_ascii=False)
     return (
@@ -106,6 +142,9 @@ def _build_docs_manifest() -> str:
         " * Sidebar manifest for the docs viewer.\n"
         " * AUTOGENERATED by scripts/build_manifests.py — do not edit by hand.\n"
         " * To add a doc: drop a .md file under docs/ and re-run the script.\n"
+        " * Override the auto-assigned section by adding `section: <name>` to\n"
+        " * the doc's YAML front-matter; otherwise the leading folder name (or\n"
+        " * the DEFAULT_SECTION mapping) is used.\n"
         " * The pytest suite (test_doc_links.py) fails CI if this drifts from disk.\n"
         " */\n"
         f"window.DOCS_MANIFEST = {body};\n"

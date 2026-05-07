@@ -294,7 +294,7 @@ servers**. Your agent never talks to Graph directly; it invokes governed MCP end
 that enforce admin policy *at the tool boundary*. This family is marketed as **Work IQ**
 and is continuously evaluated for accuracy, latency, and reliability.
 
-| Server (preview) | Capabilities |
+| Server | Capabilities |
 |---|---|
 | Work IQ **Mail** | Create/update/delete messages, reply, semantic search |
 | Work IQ **Calendar** | Create/list/update/delete events, accept/decline, conflict resolution |

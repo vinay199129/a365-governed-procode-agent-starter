@@ -49,12 +49,17 @@
       return r.text();
     })
     .then((md) => {
-      target.innerHTML = window.renderMarkdown(window.stripFrontMatter(md), 'posts');
+      target.innerHTML = window.renderMarkdown(window.stripFrontMatter(md), 'posts', entry.slug);
       window.highlightAll();
       scrollToHashAfterRender();
     })
     .catch((err) => {
-      target.innerHTML = `<h1>Could not load post</h1><p>${err.message}</p>`;
+      // Build the error panel via DOM APIs so err.message can never inject HTML.
+      const h1 = document.createElement('h1');
+      h1.textContent = 'Could not load post';
+      const p = document.createElement('p');
+      p.textContent = err.message;
+      target.replaceChildren(h1, p);
     });
 
   function setMetaDescription(text) {

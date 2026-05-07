@@ -26,7 +26,7 @@ is what it does — step by step — so nothing feels like magic.
 | 7 | Bearer token + S2S token minted | local cache |
 | 8 | `env/.env.playground` and `env/.env.playground.user` populated | local files |
 
-Two **WAM popups** appear during step 4 (`a365 setup all`). Accept both.
+Two **WAM popups** appear during the `a365 setup all` step. Accept both. (See [docs/setup-walkthrough.md](../docs/setup-walkthrough.md) for the canonical step-by-step breakdown — that doc and this post agree on what runs, but use slightly different step numbering.)
 
 ## Key concepts in five bullets
 
@@ -47,5 +47,5 @@ code a365.generated.config.json
 
 ## Go deeper
 
-- Canonical doc: [Setup walkthrough](docs.html?doc=setup-walkthrough)
-- [Troubleshooting](docs.html?doc=troubleshooting)
+- Canonical doc: [Setup walkthrough](../docs/setup-walkthrough.md)
+- [Troubleshooting](../docs/troubleshooting.md)

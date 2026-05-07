@@ -27,7 +27,7 @@ User in Playground  ──POST /api/messages──▶  aiohttp endpoint
                                   inject display name into system prompt
                                                   │
                                                   ▼
-                                    Agent.run_turn(activity, prompt)
+                            OpenAIAgentWithMCP.process_user_message(...)
                                               (agent.py)
                                                   │
                               OpenAI Agents SDK + registered MCP tools
@@ -60,6 +60,6 @@ one turn. Five minutes there is worth an hour of reading.
 
 ## Go deeper
 
-- Canonical doc: [Code walkthrough](docs.html?doc=code-walkthrough)
-- [Architecture overview](docs.html?doc=design)
-- [Troubleshooting](docs.html?doc=troubleshooting)
+- Canonical doc: [Code walkthrough](../docs/code-walkthrough.md)
+- [Architecture overview](../docs/design.md)
+- [Troubleshooting](../docs/troubleshooting.md)

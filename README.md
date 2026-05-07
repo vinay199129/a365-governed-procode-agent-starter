@@ -213,7 +213,7 @@ To set up and test this agent, refer to the [Configure Agent Testing](https://le
 
 For issues, questions, or feedback:
 
-- **Issues**: File issues in the [GitHub Issues](https://github.com/microsoft/Agent365-python/issues) section
+- **Issues**: File issues in the [GitHub Issues](https://github.com/vinay199129/a365-governed-procode-agent-starter/issues) section
 - **Documentation**: See the [Microsoft Agents 365 Developer documentation](https://learn.microsoft.com/en-us/microsoft-agent-365/developer/)
 
 ## Contributing

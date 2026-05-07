@@ -87,43 +87,4 @@ For comment-based help on any individual script:
 ```pwsh
 Get-Help scripts/<script>.ps1 -Full
 ```
-# Scripts
 
-Automation for provisioning, configuring, and tearing down the A365 Governed Pro-Code Agent Starter.
-
-All scripts are PowerShell 7+ (`pwsh`) and must be run from the repository root.
-
-## Execution order
-
-| Step | Script | Purpose | When to run |
-|---|---|---|---|
-| 1 | [setup-environment.ps1](setup-environment.ps1) | Provision Azure OpenAI + deployment, Entra client app, A365 blueprint + instance, and generate `.env` files | Day-0 bootstrap |
-| 2 | [assign-observability-role.ps1](assign-observability-role.ps1) | Grant the `Agent365.Observability.OtelWrite` app role to the blueprint service principal | Once, after step 1 |
-| 3 | [provision-second-instance.ps1](provision-second-instance.ps1) | Create a second agent instance under the same blueprint to demonstrate posture inheritance (G5/G7) | Optional demo |
-| 99 | [teardown-environment.ps1](teardown-environment.ps1) | Remove A365 blueprint + instance, Entra app, Azure resource group, and local config files | Cleanup |
-
-## Prerequisites
-
-- PowerShell 7+ (`pwsh`)
-- Azure CLI (`az`) signed in — `az login`
-- A365 CLI installed
-- Microsoft.Graph PowerShell module (required by `assign-observability-role.ps1`)
-- Permissions to create Entra app registrations and assign app roles in the target tenant
-
-## Usage
-
-```pwsh
-# 1. Provision everything
-pwsh -NoProfile -File scripts/setup-environment.ps1
-
-# 2. Grant observability role to the blueprint
-pwsh -NoProfile -File scripts/assign-observability-role.ps1
-
-# 3. (Optional) Prove inheritance with a second instance
-pwsh -NoProfile -File scripts/provision-second-instance.ps1
-
-# 99. Tear everything down
-pwsh -NoProfile -File scripts/teardown-environment.ps1
-```
-
-See each script's comment-based help (`Get-Help <script.ps1> -Full`) for parameters and examples.
