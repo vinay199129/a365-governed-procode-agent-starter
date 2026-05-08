@@ -24,6 +24,10 @@ POSTS_DIR = REPO_ROOT / "posts"
 DOCS_MANIFEST = REPO_ROOT / "assets" / "js" / "docs-manifest.js"
 POSTS_MANIFEST = REPO_ROOT / "assets" / "js" / "posts-manifest.js"
 
+# Folders kept on disk but excluded from the sidebar manifest.
+# Must mirror DOCS_EXCLUDE_DIRS in scripts/build_manifests.py.
+DOCS_EXCLUDE_DIRS: set[str] = {"adr"}
+
 # Markdown link: [text](href) — captures href only, ignoring images ![]()
 LINK_RE = re.compile(r"(?<!!)\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 
@@ -88,6 +92,8 @@ def _check_docs_link(href: str, source: Path, docs_slugs: set[str]) -> str | Non
             return f"missing doc file: {pathonly} (resolved to {target})"
         if DOCS_DIR in target.parents or target.parent == DOCS_DIR:
             slug = str(target.relative_to(DOCS_DIR).with_suffix("")).replace("\\", "/")
+            if slug.split("/", 1)[0] in DOCS_EXCLUDE_DIRS:
+                return None
             if slug not in docs_slugs:
                 return f"slug not in docs-manifest.js: {slug}"
         return None
@@ -141,10 +147,15 @@ def _check_posts_link(href: str, source: Path, posts_slugs: set[str], docs_slugs
 
 
 def test_docs_manifest_slugs_match_filesystem(docs_slugs):
-    """Every doc on disk should be reachable from the manifest (and vice versa)."""
+    """Every doc on disk should be reachable from the manifest (and vice versa).
+
+    Files under DOCS_EXCLUDE_DIRS (e.g. adr/) are intentionally kept on disk
+    but hidden from the dashboard and so are excluded from this check.
+    """
     on_disk = {
         str(p.relative_to(DOCS_DIR).with_suffix("")).replace("\\", "/")
         for p in DOCS_DIR.rglob("*.md")
+        if p.relative_to(DOCS_DIR).parts[0] not in DOCS_EXCLUDE_DIRS
     }
     only_in_manifest = docs_slugs - on_disk
     only_on_disk = on_disk - docs_slugs

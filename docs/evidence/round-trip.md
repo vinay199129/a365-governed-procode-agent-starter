@@ -4,6 +4,8 @@ Backlog task: prove that the hardened `scripts/teardown-environment.ps1` followe
 `scripts/setup-environment.ps1` reaches the same working end-state as the previous
 session, with no manual fix-ups.
 
+**Last run:** 2026-05-08 (A365 CLI `1.1.139-preview+6ebfe9e056`, pinned in `scripts/setup-environment.ps1`).
+
 ## Reproduction command
 
 ```powershell
@@ -21,13 +23,13 @@ pwsh -NoProfile -File scripts/setup-environment.ps1
 | Resource group | `rg-a365-procodeagent` | Recreated. |
 | Azure OpenAI account | `procodeagent-openai` (eastus, S0) | Recreated after purge. |
 | Model deployment | `gpt-4o-mini` | Recreated. |
-| CLI client app | `132df236-73fc-4012-a997-ff06c6cb6016` | New (prior was `fffe21b3-…`). |
-| CLI client SP | `270b66dd-80ee-4c28-a2d8-5bb9f543d579` | New. |
-| Blueprint | `19bc459c-7807-4a41-a467-4adfb9f9704b` | **Reused** — A365 service-side blueprint record persists even after the underlying Entra app is deleted. |
-| Blueprint SP | `306cc506-1f1d-4d46-b89d-22865aee933f` | Reused with the blueprint. |
-| Agent identity (`AgenticAppId`) | `0f3701db-66a0-40b4-bb3f-3b1f02090153` | New. |
-| Agent user (`AgenticUserId`) | `7d53f089-3e2a-493c-871e-be30500d074d` | New. |
-| Agent UPN | `procodeagent@vinay199129gmail.onmicrosoft.com` | Reused name (prior user `d4ad9d38-…` was deleted by teardown). |
+| CLI client app | `9db38a50-08c8-4c61-be99-f2dbb956e397` | New (prior was `132df236-…`). |
+| CLI client SP | `c7d9f995-8cdf-4840-a009-1314e8ddb4e3` | New. |
+| Blueprint | `6e453b77-96ad-4672-a37a-ad56e3c3514a` | New (prior service-side blueprint record was deleted along with the underlying Entra app this teardown). |
+| Blueprint SP | `3618e55b-75fa-4259-835f-7dccc35723c4` | New. |
+| Agent identity (`AgenticAppId`) | `3cb11e7b-db00-4f73-b728-edcef4b45fcb` | New. |
+| Agent user (`AgenticUserId`) | `e7a29177-fc11-4977-a68e-e2f5397fcc8d` | New. |
+| Agent UPN | `procodeagent@vinay199129gmail.onmicrosoft.com` | Reused name (prior user `7d53f089-…` was deleted by teardown). |
 
 ## Final environment state
 
@@ -38,7 +40,7 @@ pwsh -NoProfile -File scripts/setup-environment.ps1
 
 `env/.env.playground` (committable):
 
-- `CLIENT_APP_ID=132df236-…`
+- `CLIENT_APP_ID=9db38a50-…`
 - `USE_AGENTIC_AUTH=false`
 - `ENABLE_A365_OBSERVABILITY_EXPORTER=true` ← flipped by Step 10 once the OBS_S2S_TOKEN was real
 
@@ -61,8 +63,8 @@ pwsh -NoProfile -File scripts/setup-environment.ps1
 | 3 | Entra client app | OK | New `procodeagent-cli-app` (Graph delegated perms + admin consent granted). |
 | 4 | Python environment | OK | `uv sync` reused existing `.venv`. |
 | 5 | Playground env files | OK | `env/.env.playground` + `env/.env.playground.user` written from templates. |
-| 6 | A365 blueprint (`a365 setup all`) | OK | Blueprint reused (service-side persistence); inheritable perms + OAuth2 grants + S2S app role assignments configured. **Two interactive WAM prompts** required during this step. |
-| 7 | Primary agent identity (`a365 create-instance identity`) | OK (after recovery) | Created new `AgenticAppId` + `AgenticUserId`. **Note**: original full setup-environment.ps1 run was killed during this step's propagation wait; re-running `a365 create-instance identity` was idempotent and finished it. |
+| 6 | A365 blueprint (`a365 setup all --skip-infrastructure --skip-requirements`) | OK | Blueprint app + SP newly created; inheritable perms + OAuth2 grants + S2S app role assignments configured. **Two interactive WAM prompts** required during this step. |
+| 7 | Primary agent identity (`a365 create-instance identity`) | OK | Created `AgenticAppId` + `AgenticUserId` and `procodeagent@<tenant>` agent user with mailbox/Teams presence pending license propagation. |
 | 8 | Observability role on blueprint SP (`scripts/assign-observability-role.ps1`) | OK | Role already present (idempotent). |
 | 9 | Local-dev S2S bootstrap (client app secret + OtelWrite on client SP) | OK | Secret minted + persisted, role granted. |
 | 10 | Mint initial OBS_S2S_TOKEN (`scripts/refresh-observability-token.ps1`) | OK | 1740-char token persisted; exporter flag flipped to `true`. |

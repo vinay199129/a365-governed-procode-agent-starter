@@ -54,41 +54,6 @@ window.DOCS_MANIFEST = [
     ]
   },
   {
-    "section": "Architecture Decisions",
-    "items": [
-      {
-        "slug": "adr/0001-polyglot-test-strategy",
-        "title": "ADR 0001 — Polyglot Pester + pytest test strategy",
-        "path": "docs/adr/0001-polyglot-test-strategy.md"
-      },
-      {
-        "slug": "adr/0002-static-spa-no-build",
-        "title": "ADR 0002 — Static SPA, no build pipeline",
-        "path": "docs/adr/0002-static-spa-no-build.md"
-      },
-      {
-        "slug": "adr/0003-provisioning-via-script-not-azd",
-        "title": "ADR 0003 — Provisioning ownership: PowerShell script, not azd / Bicep",
-        "path": "docs/adr/0003-provisioning-via-script-not-azd.md"
-      },
-      {
-        "slug": "adr/0004-build-time-manifests",
-        "title": "ADR 0004 — Sidebar manifests are build-time generated and committed",
-        "path": "docs/adr/0004-build-time-manifests.md"
-      },
-      {
-        "slug": "adr/0005-posts-hand-authored-not-generated",
-        "title": "ADR 0005 — Posts are hand-authored narratives, not generated from docs",
-        "path": "docs/adr/0005-posts-hand-authored-not-generated.md"
-      },
-      {
-        "slug": "adr/README",
-        "title": "Architectural Decision Records",
-        "path": "docs/adr/README.md"
-      }
-    ]
-  },
-  {
     "section": "Setup & Operations",
     "items": [
       {

@@ -17,7 +17,7 @@ If you only read one section, read this one.
 - **What works end-to-end:** building the agent, provisioning Entra identity + Security Blueprint, multi-instance inheritance, OpenTelemetry exporter wiring, and a fully reproducible teardown → setup script round-trip. Local Playground is the verified runtime surface.
 - **What's wired but Frontier-gated at runtime:** Teams 1:1 chat (G2), Admin Portal Agents view (G1), compliance-tab capture (G6), and OTel ingestion (G9) all ride on the AI teammate identity, so they need a Frontier-enrolled tenant — *not* a pre-GA wait.
 - **Round-trip reproducibility:** `pwsh -File scripts/teardown-environment.ps1 -SkipConfirmation; pwsh -File scripts/setup-environment.ps1` will rebuild the entire environment with narrated step logs. The only manual touch-points are two WAM popups inside `a365 setup all` and an optional device-code login for the bearer token. Latest run: [docs/evidence/round-trip.md](evidence/round-trip.md).
-- **How to read the rest:** §1-§9 is the framing (what this is, what success looks like, what's deliberately not in scope). §15 is the live status board — start there if you just want to know what's done vs. pending.
+- **How to read the rest:** Sections 1-9 are the framing (what this is, what success looks like, what's deliberately not in scope). Section 15 is the live status board — start there if you just want to know what's done vs. pending.
 
 ---
 
@@ -107,7 +107,7 @@ Microsoft Agent 365 is positioned as the answer — but the integration story fo
 | D4 | Multi-instance inheritance proof | PowerShell script + generated evidence artifact |
 | D5 | Governance-plane architecture reference | Markdown + diagram |
 | D6 | Troubleshooting catalogue | Markdown document |
-| D7 | Scope, expectations, asks, and gap analysis | This document (§15 Gap Analysis) |
+| D7 | Scope, expectations, asks, and gap analysis | This document (Section 15 Gap Analysis) |
 | D8 | Executable verification steps | Script-based checklist |
 
 ---
@@ -173,10 +173,10 @@ A run of the starter is considered successful when **all** of the following are 
 
 The starter is **Done** when all of these are true:
 
-1. Every deliverable in §6 exists in the repository.
-2. Every success criterion in §7 has verifiable evidence under `docs/evidence/`.
+1. Every deliverable in Section 6 exists in the repository.
+2. Every success criterion in Section 7 has verifiable evidence under `docs/evidence/`.
 3. A clean-tenant re-provisioning run completes using only the repository scripts (see [docs/evidence/round-trip.md](evidence/round-trip.md) for the most recent reference run).
-4. §15 Gap Analysis shows nothing left except **Done** or **Out of Scope**.
+4. Section 15 Gap Analysis shows nothing left except **Done** or **Out of Scope**.
 5. A short handover note (≤ 1 page) summarising the reusable patterns is added to the repository.
 
 ---
@@ -208,8 +208,8 @@ Roles are deliberately generic — any team adopting this starter can map them t
 
 This scope is **fixed for the duration of a single starter run**. Any change — adding a tool, targeting a new hosting surface, introducing customer-specific logic — requires:
 
-1. Explicit update to §4 (In-Scope) or §5 (Out-of-Scope).
-2. Corresponding update to §7 (Success Criteria) if the change affects what "Done" means.
+1. Explicit update to Section 4 (In-Scope) or Section 5 (Out-of-Scope).
+2. Corresponding update to Section 7 (Success Criteria) if the change affects what "Done" means.
 3. A matching entry in the gap analysis.
 
 Without those updates, the new work is treated as **out of scope** and deferred to a follow-on iteration.
@@ -218,7 +218,7 @@ Without those updates, the new work is treated as **out of scope** and deferred 
 
 ## 15. Gap Analysis — Current Status vs. Success Criteria
 
-Snapshot of the repository against the success criteria in §7 and the original asks.
+Snapshot of the repository against the success criteria in Section 7 and the original asks.
 
 ### 15.1 What Has Been Achieved
 

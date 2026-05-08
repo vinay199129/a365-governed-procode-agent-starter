@@ -13,7 +13,7 @@ the exact file in this repo where it is applied.
 > **GA status (May 2026 onward).** A365 went **General Availability on May 1, 2026**.
 > Microsoft now describes the platform as four incremental capability tiers — **Register →
 > Observability → Work IQ → AI teammate** — and you adopt only the tiers your scenario
-> needs (see §1.5 below).
+> needs (see Section 1.5 below).
 >
 > **What works on any GA-licensed tenant:** the **A365 SDK** (PyPI), the **`a365` CLI**, the
 > **AI-guided setup** at [aka.ms/agent365enable](https://learn.microsoft.com/en-us/microsoft-agent-365/developer/get-started),
@@ -31,7 +31,7 @@ the exact file in this repo where it is applied.
 > ready to light up the moment Frontier — or a future broader rollout — is in place. The
 > Entra-side governance and observability paths run fully on any GA tenant; see
 > [docs/evidence/multi-instance-inheritance.md](evidence/multi-instance-inheritance.md)
-> and [docs/project-scope.md §15](project-scope.md) for the live status of each gap.
+> and [docs/project-scope.md Section 15](project-scope.md) for the live status of each gap.
 
 ---
 
@@ -64,6 +64,76 @@ blueprint) that every instance of the agent inherits automatically.*
 
 Everything else in A365 is machinery to deliver that promise.
 
+### A concrete example: the CISO's five questions
+
+Imagine a mid-size insurance company. Three teams have each shipped an "AI assistant"
+over the past year:
+
+| Team | Agent | Built with | Auth | Where it runs |
+|---|---|---|---|---|
+| Claims | "ClaimMate" answers claim-status questions | Python + OpenAI | Hardcoded API key in App Service config | Random Azure web app |
+| HR | "AskHR" answers PTO and benefits questions | Node + LangChain | Service principal, original owner has left the company | Different subscription |
+| Sales | "DealCoach" drafts customer follow-up emails | C# + Semantic Kernel | Personal access token of the developer who built it | A VM under someone's desk |
+
+Six months in, the CISO asks five questions:
+
+1. **"How many AI agents are running in our tenant?"** — Nobody knows. There is no registry.
+2. **"What data can each one touch?"** — Someone would have to read three codebases.
+3. **"If I want to ban a tool — say, sending external email — for *all* agents, where do I click?"** — Nowhere. Three tickets get filed instead.
+4. **"Show me every action ClaimMate took for customer X last Tuesday."** — Logs are scattered across three systems with three formats and no correlation IDs.
+5. **"Can I revoke ClaimMate's mailbox access in one click?"** — No. Someone has to redeploy it.
+
+This is the real-world pain. **Agents-as-snowflakes**, with no governance plane.
+Most enterprises hit it around their third or fourth agent.
+
+### The HR-contractor analogy: the four Entra objects A365 creates
+
+Onboarding a new contractor at the same insurance company involves four artifacts —
+and A365 maps onto them almost one-for-one:
+
+| A365 object | Real-world analogy | Lives in Entra as | What it carries |
+|---|---|---|---|
+| **Blueprint** | The **job description / role policy** for "Claims Assistant Contractors" — defines what *anyone* in this role is allowed to do (read mail, send mail, no SharePoint admin, mandatory audit logging). | Service Principal | Delegated scopes, app roles, allowed MCP tools, content-safety policy |
+| **Client App** | The **HR-system credential** the recruiter uses to *hire* contractors into that role — needs admin approval to operate. | App Registration | Admin-consented scopes used by the CLI / setup script |
+| **Agent Identity** | The **employee record** for *one specific* contractor (e.g. "Jane Smith, hired into the Claims Assistant role"). | Application object | Per-instance application object linked to the blueprint |
+| **Agent User** | Jane Smith's **mailbox + Teams account + UPN** — so people can email her, @-mention her, and she can sign documents. | User object | UPN, mailbox, Teams presence, directory entry |
+
+The whole point is the **Blueprint → Instance inheritance**. Provisioning a *second*
+Claims Assistant tomorrow ("John Doe") does not require re-picking permissions. He
+inherits the Blueprint's posture **byte-for-byte**, automatically. That is success
+criterion **S5** in [project-scope.md](project-scope.md#7-success-criteria) and the
+reason [scripts/provision-second-instance.ps1](../scripts/provision-second-instance.ps1)
+exists — to prove the inheritance contract empirically (see
+[evidence/multi-instance-inheritance.md](evidence/multi-instance-inheritance.md)).
+
+### Mapping the CISO's questions back to A365
+
+| CISO question | A365 answer | Where it lives in this repo |
+|---|---|---|
+| How many agents do we have? | Entra → Enterprise applications → filter by Blueprint display name | The Blueprint SP created by `setup-environment.ps1` |
+| What data can each touch? | Blueprint's delegated scopes — single source of truth | [blueprint-policy.md](blueprint-policy.md) "Inherited Delegated Scopes" |
+| Ban a tool for all agents? | Remove from `ToolingManifest.json`, re-sync the blueprint — every instance loses it | [ToolingManifest.json](../ToolingManifest.json) |
+| Show me every action? | OpenTelemetry traces tagged with `tenant_id` + `agent_id`, flowing to the A365 backend via the `OtelWrite` app role | `_setup_observability` in [agent.py](../agent.py) |
+| Revoke access? | Disable the Blueprint SP — all instances lose their tokens within minutes | One Entra toggle |
+
+None of those answers requires touching the agent's **source code**. Governance is
+data-plane, not code-plane. That is the whole win.
+
+### Why this is hard *without* A365
+
+If you tried to build the same thing with vanilla Entra primitives you would need:
+
+- A custom database mapping "agents" → "policies".
+- A custom MSAL wrapper that consults that database before every token request.
+- A custom OTel exporter that tags traces with your registry IDs.
+- An admin UI to manage the registry, policies, and revocations.
+- A convincing argument to the security team that your custom thing is as audit-worthy
+  as Entra itself.
+
+A365 ships all of that as platform. The trade-off is accepting Microsoft's opinion
+about *how* governance is shaped (Blueprint + Instance + UPN + Tool manifest). For
+most enterprises that trade is obviously worth it.
+
 ### The pitch, in Microsoft's words
 
 A365 is positioned by Microsoft as *"the control plane for agents"* — one place for IT
@@ -86,9 +156,9 @@ agents.
 
 | Pillar | What A365 delivers | Tenant surface |
 |---|---|---|
-| **Governance** ([§3](#3-governance-deep-dive-blueprint--inheritance)) | Agents register against an **Entra-registered blueprint** that encodes the allowed posture; every instance inherits it | Microsoft Entra + M365 Admin Center |
-| **Security** ([§4](#4-security-deep-dive-agentic-identity--governed-tooling)) | Identity is Entra-backed; data access flows through admin-controlled MCP servers; DLP, Purview, and Defender already understand Entra principals | Microsoft Entra + Purview + Defender |
-| **Observability** ([§5](#5-observability-deep-dive-opentelemetry-into-the-tenant)) | Every inference, tool call, and notification is an auditable OpenTelemetry span | M365 Admin Center + Microsoft Defender Advanced Hunting |
+| **Governance** ([Section 3](#3-governance-deep-dive-blueprint--inheritance)) | Agents register against an **Entra-registered blueprint** that encodes the allowed posture; every instance inherits it | Microsoft Entra + M365 Admin Center |
+| **Security** ([Section 4](#4-security-deep-dive-agentic-identity--governed-tooling)) | Identity is Entra-backed; data access flows through admin-controlled MCP servers; DLP, Purview, and Defender already understand Entra principals | Microsoft Entra + Purview + Defender |
+| **Observability** ([Section 5](#5-observability-deep-dive-opentelemetry-into-the-tenant)) | Every inference, tool call, and notification is an auditable OpenTelemetry span | M365 Admin Center + Microsoft Defender Advanced Hunting |
 
 #### Pillar 1 — Governance (identity + policy)
 
@@ -223,6 +293,148 @@ Mail/Calendar/SharePoint/Teams without raw Graph permissions (tier 3), and
 
 **Reference:** [Agent 365 — Get started](https://learn.microsoft.com/en-us/microsoft-agent-365/developer/get-started)
 
+### 1.6 Wrapping an existing agent — a Semantic Kernel scenario
+
+The most common reader question is: *"I already have an agent in production. Do I
+have to rewrite it?"* Short answer: **no — A365 wraps it.** This walkthrough makes
+that concrete with a representative pre-A365 architecture and shows exactly which
+parts change, which stay, and what each change buys you.
+
+#### Pre-A365: Field Service Copilot, already in production
+
+An industrial-equipment company has a working agent that technicians use daily:
+
+| Layer | Tech | What it does |
+|---|---|---|
+| Orchestrator | **Semantic Kernel (.NET)** with `ChatCompletionAgent` and a planner | Decides which plugin/tool to call for a technician question |
+| LLM | Azure OpenAI `gpt-4o` | Reasoning + tool selection |
+| Search index #1 | Azure AI Search — `equipment-manuals` (vectorised PDFs) | "How do I reset error E-217 on the X400 compressor?" |
+| Search index #2 | Azure AI Search — `service-history` (5 yrs of repair tickets) | "Has this serial number had this issue before?" |
+| Internal tool A | SAP REST API plugin | Pull customer + warranty status |
+| Internal tool B | ServiceNow plugin | Create / update incident tickets |
+| Internal tool C | Custom .NET REST API → SQL Server | Live IoT telemetry from field devices |
+| External tool A | Weather provider API | "Is it safe to dispatch a drone to site X?" |
+| External tool B | Parts-supplier REST API | Check stock + ETA for replacement parts |
+| Auth | Service principal `svc-fieldcopilot-prod` | All downstream systems see the same SP |
+| Logging | App Insights with custom dimensions | Ops dashboards |
+
+It works. Then the CISO and the platform team show up with three asks:
+
+1. **Governance.** "Tell me which agents touch SAP, which call external APIs, who
+   approved each one, and let me revoke any of them in one click."
+2. **Identity.** "When the agent files a ServiceNow ticket, the actor must read
+   *FieldCopilot (AI Agent)* — not a service principal name. The agent must appear
+   in the directory and Teams so technicians can `@mention` it."
+3. **Observability.** "Defender for Cloud Apps must see every tool call this agent
+   makes, in the format Microsoft's threat-hunting team expects — not ad-hoc App
+   Insights spans."
+
+#### What changes when A365 wraps it
+
+This is the key insight: **A365 does not replace Semantic Kernel.** It is a
+governance + identity + observability wrap *around* whatever orchestrator already
+exists. Mapping the existing pieces to the three pillars from Section 1:
+
+| Existing piece | Changes when A365 wraps it | Stays exactly the same |
+|---|---|---|
+| Semantic Kernel orchestrator | Wrapped by an M365 Agents SDK host so requests flow through `/api/messages` with Entra-aware context | All `KernelFunction`s, planners, prompts, chat history |
+| Azure OpenAI `gpt-4o` | Nothing — A365 does not host or proxy the LLM | Endpoint, key, deployment |
+| Azure AI Search × 2 | **Stay as plugins.** They do **not** need to become MCP servers | Index schema, skillsets, query code |
+| SAP / ServiceNow / SQL plugins | Stay as plugins. *Optional:* migrate behind a Work IQ-style MCP server only if you want central governance over them | The actual SAP / ServiceNow / SQL code |
+| Weather + parts-supplier APIs | Stay as external HTTP calls. A365 governs them via the Blueprint's outbound allow-list — anything not listed is blocked at egress | The API contracts |
+| App Insights logging | Kept for ops. A365 OTel exporter is added in **parallel** — same trace, two destinations | Existing App Insights queries |
+| Service principal `svc-fieldcopilot-prod` | **Replaced** by an A365 Agent Identity bound to a Blueprint. SAP/ServiceNow now see a real Entra principal with a UPN | Network paths and RBAC role assignments (re-pointed to the new principal) |
+
+#### The internal-plugin vs. MCP-server rule (the most confusing thing)
+
+This trips up almost everyone. The rule is simple but rarely stated clearly:
+
+- **Internal tools the agent calls directly via SK plugins** (SAP, ServiceNow, the
+  two Search indexes, the custom SQL API) are governed by **Blueprint scopes +
+  outbound allow-list**, not by being registered in the tooling manifest. They do
+  not become MCP servers.
+- **MCP servers in the tooling manifest** are for tools that need A365's centralised
+  auth (Mail, Calendar, SharePoint, Teams via Work IQ) **or** that you want to share
+  across multiple A365 agents.
+
+```
+                ┌────────────────────────────────────────────┐
+                │           Semantic Kernel kernel            │
+                │  (orchestrator — A365 does NOT touch this)  │
+                └─────────────────────┬──────────────────────┘
+                                      │
+        ┌──────────────────┬──────────┼──────────────────┬─────────────────┐
+        ▼                  ▼          ▼                  ▼                 ▼
+  ┌──────────┐      ┌──────────┐  ┌────────┐      ┌────────────┐    ┌──────────┐
+  │ AzureAI  │      │ AzureAI  │  │  SAP   │      │ServiceNow  │    │  Weather │
+  │ Search   │      │ Search   │  │Plugin  │      │ Plugin     │    │  API     │
+  │ manuals  │      │ history  │  │        │      │            │    │ (extern) │
+  └──────────┘      └──────────┘  └────────┘      └────────────┘    └──────────┘
+       │                  │           │                  │                 │
+       └──────────────────┴─────┬─────┴──────────────────┴─────────────────┘
+                                │  All calls observed via OTel → A365.
+                                │  All calls authorised by Blueprint scopes +
+                                │  outbound allow-list. No code change to plugins.
+                                ▼
+                         ┌────────────────┐
+                         │ A365 Blueprint │
+                         │ (governs them  │
+                         │  uniformly)    │
+                         └────────────────┘
+```
+
+#### What you actually add in code
+
+Three things — none of which touches your existing plugins or planner:
+
+1. **A host wrapper.** Same role as [host_agent_server.py](../host_agent_server.py)
+   in this repo, in .NET. Exposes `/api/messages` and plugs into the M365 Agents
+   SDK so the kernel runs inside an Entra-aware request context.
+2. **An observability bootstrap.** The .NET equivalent of `_setup_observability()`
+   in [agent.py](../agent.py): one `configure(...)` call plus a Semantic Kernel
+   instrumentor (the SK analogue of `OpenAIAgentsTraceInstrumentor`). Every plugin
+   invocation, every Search query, and every LLM call now flows to A365 as a typed
+   OTel span tagged with `tenant_id` + `agent_id`.
+3. **A blueprint + tooling manifest.** Declares the agent's allowed Graph scopes,
+   app roles, MCP tools, and outbound allow-list. SAP / ServiceNow / Search /
+   Weather / parts-supplier endpoints all go in the allow-list — not the manifest.
+
+#### Mapping the CISO's three asks back to A365
+
+| Ask | A365 answer | Code change |
+|---|---|---|
+| 1. Know which agents touch SAP / external APIs | Blueprint's delegated scopes + outbound allow-list are the authoritative answer | None — declarative |
+| 1. Revoke in one click | Disable the Blueprint SP — every instance loses its tokens within minutes | None |
+| 2. ServiceNow shows "FieldCopilot (AI Agent)" + directory + Teams | Agent Identity has a real UPN; ServiceNow OAuth is repointed to use the agent's token, surfacing the agent UPN as the actor | Repoint ServiceNow auth from the SP to the agent identity |
+| 3. Defender visibility | OTel exporter ships every span (LLM call, plugin call, Search query) to the A365 backend in the format Defender expects | One `configure()` call + one instrumentor line |
+
+#### Honest trade-offs
+
+This example exists to be useful — including where A365 has friction:
+
+- **Auth choices narrow.** The blueprint dictates which Entra scopes the agent can
+  request. If a plugin currently uses a non-Entra IdP (a custom SAP OAuth flow,
+  for example), it keeps working but falls outside A365 governance.
+- **OTel format is opinionated.** A365 instrumentors add their own attributes
+  (`tenant_id`, `agent_id`, `tool_name`, `tool_call_id`). Existing App Insights
+  custom dimensions remain, so expect schema duplication during transition.
+- **Frontier-gated bits.** As called out in the
+  [project-scope.md TL;DR](project-scope.md#tldr--where-this-project-stands-today),
+  the *AI teammate* tier (own UPN with mailbox + Teams presence) needs the
+  [Frontier program](https://adoption.microsoft.com/copilot/frontier-program/) at
+  GA. The "ServiceNow shows agent UPN" outcome needs Frontier today; pure
+  governance + observability wrapping works on any GA-licensed tenant.
+- **Rate of change.** A365 is brand new (GA was May 1, 2026). Blueprint policy
+  surfaces, manifest schemas, and SDK shapes will evolve faster than the
+  underlying SK app for at least the first few releases.
+
+#### Take-away
+
+The wrap pattern generalises beyond Semantic Kernel — the same three additions
+(host wrapper + OTel bootstrap + blueprint/manifest) apply to LangChain,
+LangGraph, the OpenAI Agents SDK (this repo), and the Microsoft Agent Framework.
+The orchestrator is yours; A365 owns the perimeter around it.
+
 ---
 
 ## 2. Core Concepts
@@ -310,7 +522,7 @@ and is continuously evaluated for accuracy, latency, and reliability.
 
 - **Admin control** — each MCP server is a permission on the Agent 365 application; admins allow/block per server in the M365 Admin Center.
 - **Scoped access** — agents get only the permissions they need.
-- **Observability** — every tool call is traced (see §2.4).
+- **Observability** — every tool call is traced (see Section 2.4).
 - **Policy enforcement** — runtime rate limits, payload checks, security scans.
 
 **Custom MCP servers** are supported via the **MCP Management Server** (API-first), which
@@ -372,7 +584,7 @@ and which auth handlers the agent host registers. Use this matrix to pick:
 | **Both** | Mixed: usually reactive (OBO) but occasionally needs to act on its own (S2S) — e.g. "reply to me, *and* file a follow-up reminder for tomorrow morning" | Both handlers registered; `USE_AGENTIC_AUTH` flips per call site; the host picks based on whether a user activity is in scope |
 
 The **observability ingest** path always uses S2S (the role lives on the
-blueprint SP — see [§3.3](#33-what-does-inheritance-actually-mean-mechanically)),
+blueprint SP — see [Section 3.3](#33-what-does-inheritance-actually-mean-mechanically)),
 so even an "OBO only" agent is implicitly S2S for telemetry. Picking *Both* in
 the AI-guided flow is the safe default if you're unsure; it costs nothing extra
 and keeps room for future scenarios.
@@ -737,7 +949,7 @@ row [G9](project-scope.md) is currently blocking on this non-Frontier tenant):
 - Spans carry the right baggage (`tenant_id`, `agent_id` from `BaggageBuilder`).
 - POSTs hit the real A365 ingest endpoint.
 - Backend says 403 — *gated, not broken* (see
-  [project-scope.md §15 → G9](project-scope.md)).
+  [project-scope.md Section 15 → G9](project-scope.md)).
 
 **When the tenant gate opens, the wiring does not change.** That is the entire
 point of a reference starter — pre-build the client-side correctness, wait for the
@@ -851,7 +1063,7 @@ Everything in this repo is a concrete example of those four jobs.
 
 ## 10. Recommended Reading Order
 
-Newcomers: walk these in order, then come back to the concept-to-code map in §4.
+Newcomers: walk these in order, then come back to the concept-to-code map in Section 4.
 
 1. [Product overview](https://www.microsoft.com/en-us/microsoft-agent-365) — 10-minute read; sets the *why*.
 2. [Microsoft Agent 365 SDK and CLI](https://learn.microsoft.com/en-us/microsoft-agent-365/developer/) — the layering diagram and how A365 differs from agent frameworks.

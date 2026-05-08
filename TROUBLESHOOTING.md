@@ -287,7 +287,6 @@ az cognitiveservices account purge --name <name> --resource-group <rg> --locatio
 3. Run `pwsh -NoProfile -File scripts/assign-observability-role.ps1` to put the `OtelWrite` role on the blueprint SP.
 4. Re-run the embedded Step 9 / Step 10 logic from `setup-environment.ps1` (mint client-app secret, grant `OtelWrite` to client SP, run `refresh-observability-token.ps1`).
 5. Manually flip `ENABLE_A365_OBSERVABILITY_EXPORTER=true` in `env/.env.playground`.
-
 **Prevention:** Don't kill it on first instinct. Watch for the WAM popup behind VS Code (Alt+Tab; check the taskbar). If the buffer truly hasn't changed for ≥3 minutes *and* there's no popup anywhere, then kill and follow the recovery above.
 
 ### Stale-buffer trap when monitoring long-running scripts

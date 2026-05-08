@@ -76,6 +76,20 @@ $instanceConfig | Add-Member -NotePropertyName 'skipBlueprintCreation' -NoteProp
 $instanceConfig | ConvertTo-Json -Depth 5 | Set-Content -Path $tempConfig -Encoding UTF8
 Write-Host "  Instance config : $tempConfig"
 
+# The A365 CLI reads agent state (AgenticAppId / AgenticUserId) from
+# a365.generated.config.json and will skip identity creation if those fields
+# are populated from the FIRST instance. Temporarily back up + strip them so
+# the CLI provisions a NET-NEW identity, then merge the new IDs in alongside
+# the originals.
+$generatedBackupPath = Join-Path $ProjectRoot "a365.generated.config.json.preinstance$InstanceSuffix"
+Copy-Item $generatedPath $generatedBackupPath -Force
+$gen = Get-Content $generatedPath | ConvertFrom-Json
+$firstAppId  = $gen.AgenticAppId
+$firstUserId = $gen.AgenticUserId
+$gen.AgenticAppId  = $null
+$gen.AgenticUserId = $null
+$gen | ConvertTo-Json -Depth 10 | Set-Content -Path $generatedPath -Encoding UTF8
+
 Push-Location $ProjectRoot
 try {
     # Use the A365 CLI's create-instance identity subcommand with -c <config>.
@@ -83,12 +97,25 @@ try {
     # (the blueprint is read from a365.generated.config.json, which we do not overwrite).
     a365 create-instance identity -c $tempConfig 2>&1
     if ($LASTEXITCODE -ne 0) {
+        # Restore generated config so we don't lose the first instance state
+        Copy-Item $generatedBackupPath $generatedPath -Force
         Write-Error "a365 create-instance identity failed with exit code $LASTEXITCODE"
         exit 1
     }
 } finally {
     Pop-Location
 }
+
+# Capture the new instance IDs that the CLI just wrote
+$genAfter = Get-Content $generatedPath | ConvertFrom-Json
+$secondAppId  = $genAfter.AgenticAppId
+$secondUserId = $genAfter.AgenticUserId
+
+# Restore the original generated config (first-instance IDs) so future runs/tests
+# still see instance 1 as the canonical agent.
+Copy-Item $generatedBackupPath $generatedPath -Force
+Write-Host "  Instance 1 AgenticAppId : $firstAppId"
+Write-Host "  Instance 2 AgenticAppId : $secondAppId"
 
 # --- Step 2: Verify inheritance ---
 Write-Host ""

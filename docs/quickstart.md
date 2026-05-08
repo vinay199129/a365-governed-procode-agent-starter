@@ -30,8 +30,8 @@ for Microsoft's hosted AI-guided onboarding. It walks an admin through
 subscription, region, blueprint, and agent-identity creation, asking two
 policy questions up front: which **capability tier** you want
 (Register → Observability → Work IQ → AI teammate — see
-[learning-guide §1.5](learning-guide.md)) and which **auth flow** your agents
-will use (OBO / S2S / Both — see [learning-guide §2.5](learning-guide.md)).
+[learning-guide Section 1.5](learning-guide.md)) and which **auth flow** your agents
+will use (OBO / S2S / Both — see [learning-guide Section 2.5](learning-guide.md)).
 When it finishes, jump straight to the [Verify](#verify) section below.
 
 ### Path B — Scripted setup (three commands)

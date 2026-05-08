@@ -120,15 +120,30 @@ if (-not $pwshPath) {
 }
 
 # Check A365 CLI
+# Pinned to 1.1.139-preview because newer builds (1.1.174+) dropped
+# `a365 create-instance identity` and the blueprint-only flow can no longer
+# produce per-instance identity SPs without the Frontier-gated --aiteammate
+# tier. See docs/adr/0006-a365-cli-version-pin.md (or project-scope.md G3).
+$A365CliPinnedVersion = "1.1.139-preview"
 $a365Path = Get-Command a365 -ErrorAction SilentlyContinue
+$installPinned = $false
 if (-not $a365Path) {
-    Write-Host "  [MISSING] A365 CLI - installing..." -ForegroundColor Yellow
-    # GA release: install the stable channel (no --prerelease flag).
-    dotnet tool install --global Microsoft.Agents.A365.DevTools.Cli 2>&1 | Out-Null
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-    Write-Host "  [OK] A365 CLI installed" -ForegroundColor Green
+    Write-Host "  [MISSING] A365 CLI - installing $A365CliPinnedVersion..." -ForegroundColor Yellow
+    $installPinned = $true
 } else {
-    Write-Host "  [OK] A365 CLI" -ForegroundColor Green
+    $currentVersion = (& a365 --version 2>$null | Select-Object -Last 1).Trim()
+    if ($currentVersion -notlike "$A365CliPinnedVersion*") {
+        Write-Host "  [VERSION] A365 CLI $currentVersion present; pin requires $A365CliPinnedVersion" -ForegroundColor Yellow
+        dotnet tool uninstall -g Microsoft.Agents.A365.DevTools.Cli 2>&1 | Out-Null
+        $installPinned = $true
+    } else {
+        Write-Host "  [OK] A365 CLI ($currentVersion)" -ForegroundColor Green
+    }
+}
+if ($installPinned) {
+    dotnet tool install --global Microsoft.Agents.A365.DevTools.Cli --version $A365CliPinnedVersion 2>&1 | Out-Null
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    Write-Host "  [OK] A365 CLI $A365CliPinnedVersion installed" -ForegroundColor Green
 }
 
 # --- Step 1: Verify Azure login ---

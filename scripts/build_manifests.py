@@ -33,12 +33,16 @@ POSTS_DIR = REPO_ROOT / "posts"
 DOCS_MANIFEST = REPO_ROOT / "assets" / "js" / "docs-manifest.js"
 POSTS_MANIFEST = REPO_ROOT / "assets" / "js" / "posts-manifest.js"
 
+# Folders under docs/ that are kept on disk (and reachable by direct link)
+# but excluded from the sidebar manifest. ADRs are internal-design rationale,
+# not user-facing reading material.
+DOCS_EXCLUDE_DIRS: set[str] = {"adr"}
+
 # Section ordering. Sections themselves are populated by walking docs/.
 DOCS_SECTION_ORDER: list[str] = [
     "Getting Started",
     "Concepts",
     "Architecture",
-    "Architecture Decisions",
     "Setup & Operations",
     "Governance",
     "Evidence",
@@ -112,6 +116,8 @@ def _build_docs_manifest() -> str:
     for md in sorted(DOCS_DIR.rglob("*.md")):
         rel = md.relative_to(DOCS_DIR).with_suffix("")
         slug = str(rel).replace("\\", "/")
+        if slug.split("/", 1)[0] in DOCS_EXCLUDE_DIRS:
+            continue
         section = _section_for(md, slug)
         grouped.setdefault(section, []).append(
             {
