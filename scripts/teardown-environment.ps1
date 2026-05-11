@@ -65,24 +65,50 @@ if (Test-Path $generatedPath) {
 # --- Discover ALL agent users + instance identity SPs via Graph ---
 # Catches second-instance + manually-created instances that aren't in the local config.
 function Invoke-GraphGet { param([string]$Path)
-    $raw = az rest --method GET --uri "https://graph.microsoft.com/v1.0$Path" --output json 2>$null
-    if ($raw) { return $raw | ConvertFrom-Json }
+    # Surface errors instead of swallowing them — silent failures here caused
+    # orphan SPs to survive teardown (observed when the script was re-run after
+    # a partial completion). See `Lessons learned` in TROUBLESHOOTING.md.
+    $err = $null
+    $raw = az rest --method GET --uri "https://graph.microsoft.com/v1.0$Path" --output json 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  [WARN] Graph GET $Path failed: $raw" -ForegroundColor Yellow
+        return $null
+    }
+    if ($raw) { return ($raw | Out-String | ConvertFrom-Json) }
     return $null
 }
 
 $AgentBaseName = if ($config) { ($config.agentIdentityDisplayName -replace ' Identity','').Trim() } else { 'procodeagent' }
 
-$discoveredUsers = @()
-$userFilter = [uri]::EscapeDataString("startswith(userPrincipalName,'$AgentBaseName')")
-$userResp = Invoke-GraphGet "/users?`$filter=$userFilter"
-if ($userResp -and $userResp.value) { $discoveredUsers = $userResp.value }
+# Wrap discovery so we can re-run it right before Step 3 (Graph state can change
+# between script start and Step 3 execution if Steps 1-2 modified directory objects).
+function Find-AgentResidue {
+    param([string]$BaseName)
 
-$discoveredInstanceSps = @()
-$spFilter = [uri]::EscapeDataString("startswith(displayName,'$AgentBaseName') and not(displayName eq '$AgentBaseName Blueprint')")
-$spResp = Invoke-GraphGet "/servicePrincipals?`$filter=$spFilter"
-if ($spResp -and $spResp.value) {
-    $discoveredInstanceSps = $spResp.value | Where-Object { $_.displayName -like "$AgentBaseName* Identity" }
+    $users = @()
+    $filter = [uri]::EscapeDataString("startswith(userPrincipalName,'$BaseName')")
+    $resp = Invoke-GraphGet "/users?`$filter=$filter"
+    if ($resp -and $resp.value) { $users = $resp.value }
+
+    # Use `az ad sp list` (proven reliable) instead of a compound Graph $filter.
+    # The compound `startswith(...) and not(displayName eq ...)` filter has been
+    # observed to silently return empty on some tenants; az ad sp list works.
+    $sps = @()
+    $rawSps = az ad sp list --filter "startswith(displayName,'$BaseName')" --query "[].{displayName:displayName, appId:appId, id:id}" --output json 2>&1
+    if ($LASTEXITCODE -eq 0 -and $rawSps) {
+        $allSps = $rawSps | Out-String | ConvertFrom-Json
+        # Identity SPs created by create-instance / provision-second-instance
+        $sps = @($allSps | Where-Object { $_.displayName -like "$BaseName* Identity" })
+    } else {
+        Write-Host "  [WARN] az ad sp list failed: $rawSps" -ForegroundColor Yellow
+    }
+
+    return [pscustomobject]@{ Users = $users; InstanceSps = $sps }
 }
+
+$residue = Find-AgentResidue -BaseName $AgentBaseName
+$discoveredUsers = $residue.Users
+$discoveredInstanceSps = $residue.InstanceSps
 
 Write-Host "============================================================" -ForegroundColor Red
 Write-Host " A365 Governed Pro-Code Agent Starter - FULL TEARDOWN" -ForegroundColor Red

@@ -18,18 +18,20 @@ pwsh -NoProfile -File scripts/setup-environment.ps1
 
 | Artifact | ID | Notes |
 | --- | --- | --- |
-| Tenant | `253bc031-a17c-4b57-b83c-1ee1d86b1331` | Stable. |
-| Subscription | `0f0fa811-d118-4f4b-ab07-bf80b5565924` | Stable. |
+> Tenant-specific identifiers (tenant/subscription GUIDs, app/SP IDs, UPNs) have been replaced with placeholders. Your values will differ on every run.
+
+| Tenant | `<tenant-id>` | Stable. |
+| Subscription | `<subscription-id>` | Stable. |
 | Resource group | `rg-a365-procodeagent` | Recreated. |
 | Azure OpenAI account | `procodeagent-openai` (eastus, S0) | Recreated after purge. |
 | Model deployment | `gpt-4o-mini` | Recreated. |
-| CLI client app | `9db38a50-08c8-4c61-be99-f2dbb956e397` | New (prior was `132df236-…`). |
-| CLI client SP | `c7d9f995-8cdf-4840-a009-1314e8ddb4e3` | New. |
-| Blueprint | `6e453b77-96ad-4672-a37a-ad56e3c3514a` | New (prior service-side blueprint record was deleted along with the underlying Entra app this teardown). |
-| Blueprint SP | `3618e55b-75fa-4259-835f-7dccc35723c4` | New. |
-| Agent identity (`AgenticAppId`) | `3cb11e7b-db00-4f73-b728-edcef4b45fcb` | New. |
-| Agent user (`AgenticUserId`) | `e7a29177-fc11-4977-a68e-e2f5397fcc8d` | New. |
-| Agent UPN | `procodeagent@vinay199129gmail.onmicrosoft.com` | Reused name (prior user `7d53f089-…` was deleted by teardown). |
+| CLI client app | `<client-app-id>` | New (prior client app id was different). |
+| CLI client SP | `<client-sp-id>` | New. |
+| Blueprint | `<blueprint-app-id>` | New (prior service-side blueprint record was deleted along with the underlying Entra app this teardown). |
+| Blueprint SP | `<blueprint-sp-id>` | New. |
+| Agent identity (`AgenticAppId`) | `<instance1-sp-id>` | New. |
+| Agent user (`AgenticUserId`) | `<instance1-user-oid>` | New. |
+| Agent UPN | `procodeagent@<your-tenant-domain>` | Reused name (prior user oid was deleted by teardown). |
 
 ## Final environment state
 
@@ -40,7 +42,7 @@ pwsh -NoProfile -File scripts/setup-environment.ps1
 
 `env/.env.playground` (committable):
 
-- `CLIENT_APP_ID=9db38a50-…`
+- `CLIENT_APP_ID=<client-app-id>`
 - `USE_AGENTIC_AUTH=false`
 - `ENABLE_A365_OBSERVABILITY_EXPORTER=true` ← flipped by Step 10 once the OBS_S2S_TOKEN was real
 

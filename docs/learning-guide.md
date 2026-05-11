@@ -170,7 +170,7 @@ agents.
   per-instance consent drift.
 - Admin surface: **Microsoft Entra admin center** + **M365 Admin Center → Agents view**.
 
-*Concretely in this repo:* the blueprint is `19bc459c-...`; both `procodeagent` and
+*Concretely in this repo:* the blueprint is `<blueprint-app-id>`; both `procodeagent` and
 `procodeagent2` inherit identically — proven in
 [docs/evidence/multi-instance-inheritance.md](evidence/multi-instance-inheritance.md).
 
@@ -664,8 +664,8 @@ app registration. It carries:
 | Auth handler configuration (federated credential type, audience) | `.env` → `AGENTAPPLICATION__USERAUTHORIZATION__HANDLERS__AGENTIC__SETTINGS__TYPE=AgenticUserAuthorization` |
 | Infrastructure template (optional) | `webAppName` field in the config |
 
-*Concretely in this tenant:* blueprint app id `19bc459c-7807-4a41-a467-4adfb9f9704b`,
-blueprint SP `306cc506-1f1d-4d46-b89d-22865aee933f`. The `OtelWrite` role is assigned
+*Concretely in this tenant:* blueprint app id `<blueprint-app-id>`,
+blueprint SP `<blueprint-sp-id>`. The `OtelWrite` role is assigned
 **once, on the blueprint SP** — and that is where every instance picks it up from.
 
 ### 3.3 What does inheritance actually mean, mechanically?
@@ -692,7 +692,7 @@ The CLI does **not** copy the S2S app-role assignments onto the instance SP. Tho
 stay on the blueprint SP. The instance acquires its observability token *as the
 blueprint identity* via federated credential exchange.
 
-That is why our `OtelWrite` role assignment lives only on `306cc506-...` and not on
+That is why our `OtelWrite` role assignment lives only on `<blueprint-sp-id>` and not on
 either instance — see
 [docs/evidence/multi-instance-inheritance.md](evidence/multi-instance-inheritance.md).
 

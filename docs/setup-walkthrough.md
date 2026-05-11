@@ -108,7 +108,7 @@ Local machine                          Azure subscription                 Entra 
 
 ## Step 1b — Resolve verified tenant domain
 
-**What:** Calls Microsoft Graph (`/v1.0/domains?$filter=isDefault eq true`) to find the operator's verified tenant domain (e.g. `vinay199129gmail.onmicrosoft.com`). Becomes the suffix of the agent UPN later.
+**What:** Calls Microsoft Graph (`/v1.0/domains?$filter=isDefault eq true`) to find the operator's verified tenant domain (e.g. `<your-tenant-domain>.onmicrosoft.com`). Becomes the suffix of the agent UPN later.
 **Side effects:** None (read-only Graph call).
 **File:** lines 147-159.
 
