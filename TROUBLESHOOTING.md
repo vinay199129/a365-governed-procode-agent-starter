@@ -328,6 +328,12 @@ Empty result → re-run `setup-environment.ps1` (idempotent for this step) or ru
 
 **Resolution:** Not a code defect. Documented as gap **G9** in [docs/project-scope.md](docs/project-scope.md). Retest on a Frontier-enrolled or GA-licensed tenant. The exporter wiring itself has been validated end-to-end (token resolver, baggage stamping, OTLP POST shape).
 
+**What we already tried (don't repeat unless tenant changes):**
+
+- Ran `a365 setup admin --config-dir <repo>` — succeeded, granted OAuth2 consent for all five APIs and re-assigned the `Agent365.Observability.OtelWrite` S2S app role. **Did not fix the 403.** The `roles` claim in the resulting Power Platform token is still empty. CLI itself warned `Frontier Preview Program - Tenant enrollment cannot be verified automatically`, which lines up with the licensing gap.
+- Switched the script to scope `9b975845-388f-4429-889e-eab1ef63949c/.default` (the Agent365Observability resource itself). Token then carries `roles: Agent365.Observability.OtelWrite` ✅ but the audience is wrong and the endpoint returns **HTTP 401**. So both scopes are unusable from a non-Frontier tenant — there is no client-side workaround.
+- Net: the only fix is tenant-side licensing/enrollment. [scripts/refresh-observability-token.ps1](scripts/refresh-observability-token.ps1) keeps the Power Platform scope (the closer-to-correct of the two) and documents the trade-off in its docstring.
+
 ### `AUTH_HANDLER_NAME` is not set when `USE_AGENTIC_AUTH=true`
 
 **Symptom:** Flipping `USE_AGENTIC_AUTH=true` in `env/.env.playground` and pressing F5 — the agent runs, but MCP tool calls silently fall back to the no-auth path instead of using agentic OBO. No error, no warning above `INFO`.
@@ -337,6 +343,42 @@ Empty result → re-run `setup-environment.ps1` (idempotent for this step) or ru
 **Resolution:** Add `AUTH_HANDLER_NAME=AGENTIC` to `env/.env.playground` and re-run, **and** ensure the matching `AGENTAPPLICATION__USERAUTHORIZATION__HANDLERS__AGENTIC__*` block is present (today only `.env.template` has it; the Playground env files do not). This is currently a latent defect because we only run with `USE_AGENTIC_AUTH=false` (gap G9 in [docs/project-scope.md](docs/project-scope.md)). It will surface as soon as G2 (Teams installation) unblocks the agentic-auth retest path.
 
 The fix also belongs upstream — either the host code should derive the handler name from the framework registry instead of an env var, or `setup-environment.ps1` should write `AUTH_HANDLER_NAME` and the matching `AGENTAPPLICATION__` block when `USE_AGENTIC_AUTH=true`.
+
+### MCP servers all return HTTP 500 (`mcp_MailTools`, `mcp_CalendarTools`, etc.)
+
+**Symptom:** Bot starts cleanly, sends a message in Playground, and the host log shows:
+
+```
+INFO:McpToolRegistrationService:Loaded 4 MCP server configurations
+INFO:httpx:HTTP Request: POST https://agent365.svc.cloud.microsoft/agents/servers/mcp_MailTools "HTTP/1.1 500 Internal Server Error"
+WARNING:McpToolRegistrationService:Failed to connect to MCP server mcp_MailTools ...
+... (same for Calendar / SharePoint / Teams)
+INFO:McpToolRegistrationService:No new MCP servers to add to agent
+```
+
+The agent then answers from the LLM only ("I don't have access to your meetings…").
+
+**Root cause:** The bearer token is reaching the MCP service, but the **calling user is not licensed for M365** in the tenant. The MCP servers are thin wrappers over Microsoft Graph (Mail / Calendar / SharePoint / Teams) that operate on the *signed-in user's* mailbox, calendar, and Teams membership. A guest, an MSA (`live.com` IDP), or a member without an M365 license has nothing for those servers to read or write — so the `tools/list` handshake itself 500s.
+
+You can confirm by decoding the bearer JWT (`env/.env.playground.user → SECRET_BEARER_TOKEN`, paste into [jwt.ms](https://jwt.ms)):
+
+| Claim | Bad (causes 500) | Good |
+|---|---|---|
+| `idp` | `live.com` | (omitted, or your tenant's federated IdP) |
+| `preferred_username` | `you@gmail.com` / `you@outlook.com` | `you@yourtenant.onmicrosoft.com` |
+| `idtyp` | `user` *and* the user is a guest | `user` and the user is a member |
+
+**Resolution options:**
+
+1. **Sign in with a licensed work/school account** in the tenant when `refresh-bearer-token.ps1` shows the device code. Clear the cache first so it doesn't reuse the wrong account:
+   ```powershell
+   Remove-Item "$env:LOCALAPPDATA\a365-procode-agent\msal-cache\*" -Force -ErrorAction SilentlyContinue
+   (Get-Content env\.env.playground.user) -replace '^SECRET_BEARER_TOKEN=.*','SECRET_BEARER_TOKEN=' | Set-Content env\.env.playground.user
+   pwsh .vscode/scripts/refresh-bearer-token.ps1
+   ```
+2. **Skip MCP smoke tests** if no licensed user is available — the rest of the platform (provisioning, Blueprint inheritance, observability wiring, F5 → bot reply) all work without MCP. Mark this as `blocked-by-tenant` in your test matrix.
+
+This is **not** a code defect; it's a tenant/identity prerequisite. The MCP client wiring is verified working — the failure surfaces server-side because the principal has no M365 data.
 
 ## Key Learnings Summary
 
@@ -353,3 +395,4 @@ The fix also belongs upstream — either the host code should derive the handler
 11. **Check artifact state on disk before assuming a script is hung** — terminal buffers can lag real progress by minutes
 12. **`SECRET_*` env-file names get re-mapped to un-prefixed names by `m365agents.playground.yml`** — the Python source reads `BEARER_TOKEN`, not `SECRET_BEARER_TOKEN`. See the env-flow table in [docs/design.md](docs/design.md#how-env-variables-flow-into-the-running-agent)
 13. **`AUTH_HANDLER_NAME` is currently orphaned** — referenced by `host_agent_server.py` but not written by setup; flipping `USE_AGENTIC_AUTH=true` today silently falls back to no-auth. Latent defect, surfaces with G2 (Teams)
+14. **MCP smoke tests need a *licensed* M365 user** — guest accounts and personal MSAs (`live.com` IDP) cause every MCP server to return HTTP 500 on the `tools/list` handshake. The bot still runs (graceful fallback to bare LLM), but tool calls won't fire. Sign in as `you@yourtenant.onmicrosoft.com`, not `you@gmail.com`

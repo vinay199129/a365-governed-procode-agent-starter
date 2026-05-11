@@ -79,7 +79,7 @@ Invoke-Pester scripts/*.Tests.ps1                                    # pester un
 These need a live tenant and so are deferred to the round-trip evidence script (see [docs/evidence/round-trip.md](evidence/round-trip.md)):
 
 - Real OBO token exchange via `GraphAgenticHandler`
-- Real MCP tool invocation against `agent365.svc.cloud.microsoft`
+- Real MCP tool invocation against `agent365.svc.cloud.microsoft` — **requires a licensed M365 work/school user** signing into the bearer-token refresh script. Guests, MSAs, and unlicensed members cause every MCP server to return HTTP 500. See [TROUBLESHOOTING.md → MCP servers all return HTTP 500](../TROUBLESHOOTING.md#mcp-servers-all-return-http-500-mcp_mailtools-mcp_calendartools-etc).
 - Observability span export to the A365 portal
 - Notifications round-trip
 - AI teammate (Frontier-gated) tier

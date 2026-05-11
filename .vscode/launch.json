@@ -9,6 +9,11 @@
             "program": "${workspaceFolder}/start_with_generic_host.py",
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
+            "env": {
+                "PYTHONUTF8": "1",
+                "PYTHONIOENCODING": "utf-8",
+                "OBS_DEBUG": "1"
+            },
             "serverReadyAction": {
                 "pattern": "(started|listening|Running|Serving) (at|on) (https?://\\S+)",
                 "action": "startDebugging",

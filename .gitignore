@@ -49,3 +49,5 @@ a365.generated.config.json.bak*
 # Session/scratch notes (local only)
 .copilot-tracking/
 
+
+testResults.xml

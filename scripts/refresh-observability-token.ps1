@@ -24,6 +24,13 @@
          scope https://api.powerplatform.com/.default and writes it as
          SECRET_OBS_S2S_TOKEN in env/.env.playground.user.
 
+    Known limitation: even with the OtelWrite role assigned in Entra, Power
+    Platform may still issue tokens with empty `roles` until the role is
+    granted/consented at the Power Platform layer for the tenant. In that
+    case the exporter logs HTTP 403 (correlation ID present) but the rest of
+    the pipeline (span generation, identity propagation, payload encoding)
+    is fully exercised. See docs/troubleshooting.md.
+
     Requires: PowerShell 7+, Python venv with msal.
 
 .EXAMPLE
@@ -32,10 +39,21 @@
 
 param(
     [string]$ConfigDir = (Split-Path $PSScriptRoot -Parent),
+    # The observability endpoint expects a token issued for the Power Platform
+    # audience (https://api.powerplatform.com) AND carrying the
+    # `Agent365.Observability.OtelWrite` role claim. Power Platform is
+    # supposed to enrich the token with that role from the Entra
+    # appRoleAssignment + admin consent (`a365 setup admin`). In tenants where
+    # Frontier Preview enrollment / M365 E7 license has not propagated, the
+    # `roles` claim comes back empty and the endpoint returns HTTP 403 even
+    # though all client-side wiring is correct. Issuing against the resource
+    # scope (`9b975845.../.default`) populates `roles` but produces the wrong
+    # audience and the endpoint returns HTTP 401. See docs/troubleshooting.md.
     [string]$Scope = "https://api.powerplatform.com/.default"
 )
 
 $ErrorActionPreference = "Stop"
+
 
 $configPath      = Join-Path $ConfigDir "a365.config.json"
 $generatedPath   = Join-Path $ConfigDir "a365.generated.config.json"

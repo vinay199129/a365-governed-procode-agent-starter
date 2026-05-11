@@ -19,6 +19,16 @@ You need:
 > agent identity) plus an Azure OpenAI deployment in your subscription.
 > Use a non-production tenant the first time.
 
+> **Identity note.** To exercise the **MCP tool calls** (Mail / Calendar /
+> SharePoint / Teams) you must sign in to the bearer-token refresh script as a
+> **licensed M365 work/school account** in the same tenant
+> (`you@yourtenant.onmicrosoft.com`). Guest accounts, personal MSAs
+> (`@gmail.com`, `@outlook.com` / `live.com` IDP), and unlicensed members will
+> cause every MCP server to return HTTP 500 — the bot will still reply, but
+> from the LLM only. See
+> [TROUBLESHOOTING.md → MCP servers all return HTTP 500](../TROUBLESHOOTING.md#mcp-servers-all-return-http-500-mcp_mailtools-mcp_calendartools-etc)
+> for details.
+
 ## Two onboarding paths
 
 A365 supports two ways to provision the platform side. Pick the one that fits.

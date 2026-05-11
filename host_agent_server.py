@@ -65,6 +65,21 @@ logger = logging.getLogger(__name__)
 load_dotenv(override=True)
 agents_sdk_config = load_configuration_from_env(environ)
 
+# Opt-in DEBUG for the Agent 365 observability exporter so we can see why spans
+# get filtered out (set OBS_DEBUG=1 in env/.env.playground.user to enable).
+# Evaluated after load_dotenv so the flag in .env files takes effect.
+if environ.get("OBS_DEBUG", "").lower() in ("1", "true", "yes"):
+    obs_logger = logging.getLogger("microsoft_agents_a365.observability")
+    obs_logger.setLevel(logging.DEBUG)
+    # Attach a dedicated handler so DEBUG records are emitted even when the
+    # root logger's handler is at INFO (basicConfig in agent.py).
+    _obs_handler = logging.StreamHandler()
+    _obs_handler.setLevel(logging.DEBUG)
+    _obs_handler.setFormatter(logging.Formatter("DEBUG %(name)s: %(message)s"))
+    obs_logger.addHandler(_obs_handler)
+    obs_logger.propagate = False
+    logger.info("OBS_DEBUG=1 → microsoft_agents_a365.observability set to DEBUG (dedicated handler)")
+
 
 class SafeAgentNotification(AgentNotification):
     """
@@ -230,8 +245,17 @@ class GenericAgentHost:
         async def on_message(context: TurnContext, _: TurnState):
             """Handle all messages with the hosted agent"""
             try:
-                tenant_id = context.activity.recipient.tenant_id
-                agent_id = context.activity.recipient.agentic_app_id
+                # Identity for observability baggage. In real Teams/M365 channels
+                # the recipient.tenant_id / recipient.agentic_app_id are populated
+                # by the platform. In Microsoft 365 Agents Playground they're
+                # None — fall back to env vars provisioned by setup-environment.ps1
+                # so observability spans still carry tenant/agent identity.
+                tenant_id = context.activity.recipient.tenant_id or environ.get(
+                    "AGENT_TENANT_ID"
+                ) or environ.get("CONNECTIONS__SERVICE_CONNECTION__SETTINGS__TENANTID")
+                agent_id = context.activity.recipient.agentic_app_id or environ.get(
+                    "AGENT_ID"
+                ) or environ.get("AGENT_BLUEPRINT_ID")
                 with BaggageBuilder().tenant_id(tenant_id).agent_id(agent_id).build():
                     # Ensure the agent is available
                     if not self.agent_instance:
@@ -345,8 +369,16 @@ class GenericAgentHost:
             notification_activity: AgentNotificationActivity,
         ):
             try:
-                tenant_id = context.activity.recipient.tenant_id if context.activity.recipient else None
-                agent_id = context.activity.recipient.agentic_app_id if context.activity.recipient else None
+                tenant_id = (
+                    (context.activity.recipient.tenant_id if context.activity.recipient else None)
+                    or environ.get("AGENT_TENANT_ID")
+                    or environ.get("CONNECTIONS__SERVICE_CONNECTION__SETTINGS__TENANTID")
+                )
+                agent_id = (
+                    (context.activity.recipient.agentic_app_id if context.activity.recipient else None)
+                    or environ.get("AGENT_ID")
+                    or environ.get("AGENT_BLUEPRINT_ID")
+                )
 
                 with BaggageBuilder().tenant_id(tenant_id).agent_id(agent_id).build():
                     # Ensure the agent is available
